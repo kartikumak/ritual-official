@@ -2,11 +2,14 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, use } from "react";
-import { ChevronLeft, Check, FastForward, RotateCcw, AlertCircle, Quote, BookOpen } from "lucide-react";
+import { ChevronLeft, Check, FastForward, RotateCcw, AlertCircle, Quote, BookOpen, History, Image as ImageIcon, Mic, Trash2, Play } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useAuth } from "@/src/context/AuthContext";
 import { getSupabase } from "@/src/lib/supabase";
 import { useRouter } from "next/navigation";
+import { MemoryFadeEngine } from "@/src/lib/algorithm";
+import DrawingPad from "@/src/components/DrawingPad";
+import VoiceRecorder from "@/src/components/VoiceRecorder";
 
 export default function StudySession({ params }: { params: Promise<{ deckId: string }> }) {
   const { deckId } = use(params);
@@ -20,6 +23,12 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
   const [result, setResult] = useState<any>(null);
   const [session, setSession] = useState<any>(null);
   const [deck, setDeck] = useState<any>(null);
+  const [lastReview, setLastReview] = useState<any>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [showDrawingPad, setShowDrawingPad] = useState(false);
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+  const [currentDrawing, setCurrentDrawing] = useState<string | null>(null);
+  const [currentAudio, setCurrentAudio] = useState<string | null>(null);
 
   const supabase = getSupabase();
   const router = useRouter();
@@ -28,6 +37,24 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
     if (!authLoading && !user) router.push('/login');
     if (user) startSession();
   }, [user, authLoading]);
+
+  // Fetch last review whenever index changes or session starts
+  useEffect(() => {
+    if (anchors[index]) {
+      fetchLastReview(anchors[index].id);
+    }
+  }, [index, anchors]);
+
+  const fetchLastReview = async (anchorId: string) => {
+    const { data } = await supabase
+      .from('review_logs')
+      .select('*')
+      .eq('anchor_id', anchorId)
+      .order('reviewed_at', { ascending: false })
+      .limit(1)
+      .single();
+    setLastReview(data);
+  };
 
   const startSession = async () => {
     setLoading(true);
@@ -80,7 +107,9 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
           user_id: user?.id,
           anchor_id: current.id,
           text: recallText,
-          session_id: session?.id
+          session_id: session?.id,
+          drawing_json: currentDrawing,
+          audio_url: currentAudio
         })
       });
       
@@ -200,14 +229,59 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
                     </div>
                   )}
                 </div>
+
+                {/* Cognitive Assistance (Memory Fade) */}
+                {lastReview && (
+                  <div className="mt-4 pt-4 border-t border-border/40">
+                    <button 
+                      onClick={() => setShowHistory(!showHistory)}
+                      className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 hover:text-primary transition-colors"
+                    >
+                      <History size={12} />
+                      Previous Perception
+                    </button>
+                    <motion.div 
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      className={cn(
+                        "mt-2 text-xs leading-relaxed italic border-l-2 border-primary/20 pl-4 py-1",
+                        MemoryFadeEngine.getFadeClass(progress.repetitions || 0)
+                      )}
+                    >
+                      {lastReview.response_text}
+                    </motion.div>
+                  </div>
+                )}
               </div>
 
               {/* Input Area */}
               <div className="flex-1 flex flex-col gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-[1px] bg-muted/20" />
+                <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Perform Retrieval</span>
-                  <div className="flex-1 h-[1px] bg-muted/20" />
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setShowDrawingPad(true)}
+                      className={cn(
+                        "p-2 rounded-lg border transition-all relative",
+                        currentDrawing ? "bg-emerald-50 border-emerald-200 text-emerald-600" : "bg-card border-border text-muted-foreground hover:text-primary"
+                      )} 
+                      title="Add Drawing"
+                    >
+                      <ImageIcon size={14} />
+                      {currentDrawing && <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full border border-white" />}
+                    </button>
+                    <button 
+                      onClick={() => setShowVoiceRecorder(true)}
+                      className={cn(
+                        "p-2 rounded-lg border transition-all relative",
+                        currentAudio ? "bg-emerald-50 border-emerald-200 text-emerald-600" : "bg-card border-border text-muted-foreground hover:text-primary"
+                      )} 
+                      title="Record Audio"
+                    >
+                      <Mic size={14} />
+                      {currentAudio && <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full border border-white" />}
+                    </button>
+                  </div>
                 </div>
 
                 <textarea 
@@ -217,6 +291,33 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
                   className="flex-1 w-full p-6 rounded-2xl bg-card border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-none text-sm leading-relaxed"
                   autoFocus
                 />
+
+                {(currentDrawing || currentAudio) && (
+                  <div className="flex gap-4">
+                    {currentDrawing && (
+                      <div className="relative group flex-1">
+                        <img src={currentDrawing} alt="Draft drawing" className="w-full h-24 object-contain bg-white rounded-xl border border-border" />
+                        <button 
+                          onClick={() => setCurrentDrawing(null)}
+                          className="absolute top-2 right-2 p-1 bg-rose-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash2 size={10} />
+                        </button>
+                      </div>
+                    )}
+                    {currentAudio && (
+                      <div className="relative group flex-1 flex items-center justify-center bg-emerald-50 rounded-xl border border-emerald-100 h-24">
+                        <Play size={20} className="text-emerald-600" fill="currentColor" onClick={() => new Audio(currentAudio).play()} />
+                        <button 
+                          onClick={() => setCurrentAudio(null)}
+                          className="absolute top-2 right-2 p-1 bg-rose-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash2 size={10} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <button 
                   onClick={handleEvaluate}
@@ -254,6 +355,31 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
                       {result.evalResult.correction}
                    </pre>
                 </div>
+
+                {/* Evolution Tracking */}
+                {lastReview && (
+                  <div className="mt-4 pt-4 border-t border-black/5">
+                    <div className="flex items-center justify-between mb-2">
+                       <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Conceptual Evolution</h4>
+                       <span className={cn(
+                         "text-[9px] font-bold px-2 py-0.5 rounded-full",
+                         result.evalResult.score > lastReview.score ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"
+                       )}>
+                         {result.evalResult.score > lastReview.score ? `+${result.evalResult.score - lastReview.score}% Depth` : 'Stable'}
+                       </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <p className="text-[8px] font-bold text-muted-foreground/40 uppercase">Previous</p>
+                        <p className="text-[10px] line-clamp-2 opacity-50 italic">{lastReview.response_text}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[8px] font-bold text-muted-foreground/40 uppercase">Current</p>
+                        <p className="text-[10px] line-clamp-2 font-medium">{recallText}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* SRS Meta */}
@@ -319,6 +445,25 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
           )}
         </AnimatePresence>
       </div>
+
+      {showDrawingPad && (
+        <DrawingPad 
+          onSave={(data) => {
+            setCurrentDrawing(data);
+            setShowDrawingPad(false);
+          }}
+          onClose={() => setShowDrawingPad(false)}
+        />
+      )}
+      {showVoiceRecorder && (
+        <VoiceRecorder 
+          onSave={(url) => {
+            setCurrentAudio(url);
+            setShowVoiceRecorder(false);
+          }}
+          onClose={() => setShowVoiceRecorder(false)}
+        />
+      )}
     </div>
   );
 }

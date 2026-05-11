@@ -63,7 +63,8 @@ create table public.review_logs (
   score int not null,
   recall_level text not null,
   response_text text,
-  had_drawing boolean default false,
+  drawing_json text, -- New: stores the canvas path as JSON string
+  audio_url text,    -- New: stores the link to recorded audio
   reviewed_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 

@@ -39,9 +39,9 @@ export default function AboutPage() {
 
           <div className="p-6 rounded-3xl bg-card border border-border shadow-sm">
             <Zap className="text-primary mb-3" size={24} />
-            <h3 className="text-sm font-bold mb-2">The Approach</h3>
+            <h3 className="text-sm font-bold mb-2">The Memory Fade System</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              We combine Spaced Repetition (SRS) with Active Recall. By forcing yourself to re-articulate concepts, you strengthen the neural pathways associated with that knowledge.
+              As you master a concept, Rituals gradually reduces the assistance shown to you. Previous responses fade away as your autonomy grows, ensuring your brain does the heavy lifting required for true long-term anchoring.
             </p>
           </div>
 

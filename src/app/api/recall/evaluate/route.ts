@@ -4,7 +4,8 @@ import { RecallEngine, SRSEngine } from '@/src/lib/algorithm';
 
 export async function POST(req: NextRequest) {
   try {
-    const { user_id, anchor_id, text, session_id } = await req.json();
+    const body = await req.json();
+    const { user_id, anchor_id, text, session_id, drawing_json, audio_url } = body;
     const supabase = getSupabase();
 
     // 1. Get Anchor Data
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (anchorError || !anchor) throw new Error('Anchor not found');
-
+    
     // 2. Evaluate
     const evalResult = RecallEngine.evaluate(text, anchor);
 
@@ -53,7 +54,9 @@ export async function POST(req: NextRequest) {
       session_id,
       score: evalResult.score,
       recall_level: evalResult.level,
-      response_text: text
+      response_text: text,
+      drawing_json,
+      audio_url
     });
 
     return NextResponse.json({ evalResult, newSRS, depthLabel: SRSEngine.depthLabel(newSRS.concept_depth) });

@@ -199,3 +199,33 @@ export const SRSEngine = {
     return ALGO_CONFIG.iPlus1Config.depthLabels[depth] || "Anchored";
   }
 };
+
+export const MemoryFadeEngine = {
+  /**
+   * Calculates the assistance visibility level (0.0 to 1.0)
+   * based on the current repetition count.
+   * 
+   * Logic:
+   * Rep 0: 1.0 (Full visibility)
+   * Rep 1: 0.7
+   * Rep 2: 0.4
+   * Rep 3: 0.1
+   * Rep 4+: 0.0 (Manual peek only)
+   */
+  getAssistanceLevel(repetitions: number): number {
+    if (repetitions <= 0) return 1.0;
+    if (repetitions === 1) return 0.6;
+    if (repetitions === 2) return 0.3;
+    if (repetitions === 3) return 0.1;
+    return 0.0;
+  },
+
+  getFadeClass(repetitions: number): string {
+    const level = this.getAssistanceLevel(repetitions);
+    if (level >= 0.8) return "opacity-100";
+    if (level >= 0.5) return "opacity-60";
+    if (level >= 0.2) return "opacity-30";
+    if (level > 0) return "opacity-10";
+    return "opacity-0 blur-sm hover:opacity-100 hover:blur-none transition-all duration-500 cursor-help";
+  }
+};
