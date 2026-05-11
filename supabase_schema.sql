@@ -90,14 +90,20 @@ alter table public.review_logs enable row level security;
 alter table public.sessions enable row level security;
 
 -- Policies
-create policy "Users can view their own profile" on profiles for select using (auth.uid() = id);
-create policy "Users can update their own profile" on profiles for update using (auth.uid() = id);
-create policy "Users can manage their own decks" on decks for all using (auth.uid() = user_id);
-create policy "Users can view anchors in their decks" on anchors for select using (
-  exists (select 1 from decks where id = deck_id and user_id = auth.uid())
+create policy "Users can view their own profile" on public.profiles for select using (auth.uid() = id);
+create policy "Users can update their own profile" on public.profiles for update using (auth.uid() = id);
+
+create policy "Users can manage their own decks" on public.decks for all using (auth.uid() = user_id);
+
+create policy "Users can manage anchors in their decks" on public.anchors for all using (
+  exists (select 1 from public.decks where id = deck_id and user_id = auth.uid())
 );
-create policy "Users can manage progress" on anchor_progress for all using (auth.uid() = user_id);
-create policy "Users can view their logs" on review_logs for select using (auth.uid() = user_id);
+
+create policy "Users can manage progress" on public.anchor_progress for all using (auth.uid() = user_id);
+
+create policy "Users can manage their own logs" on public.review_logs for all using (auth.uid() = user_id);
+
+create policy "Users can manage sessions" on public.sessions for all using (auth.uid() = user_id);
 
 -- Create profile on signup
 create function public.handle_new_user()

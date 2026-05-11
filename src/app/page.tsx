@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from "framer-motion";
-import { BookOpen, Star, Plus, Settings as SettingsIcon, LayoutGrid, LogOut, Download, Upload, Trash2 } from "lucide-react";
+import { BookOpen, Star, Plus, Settings as SettingsIcon, LayoutGrid, LogOut, Download, Upload, Trash2, AlertCircle } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { cn, getInitials } from "@/src/lib/utils";
 import { useAuth } from "@/src/context/AuthContext";
@@ -16,6 +16,7 @@ export default function Home() {
   const [decks, setDecks] = useState<any[]>([]);
   const [stats, setStats] = useState({ total: 0, weekly: 0 });
   const [loading, setLoading] = useState(true);
+  const [dbError, setDbError] = useState<string | null>(null);
   const [showNewDeckModal, setShowNewDeckModal] = useState(false);
   const [newDeck, setNewDeck] = useState({ name: '', description: '' });
   const [newAnchor, setNewAnchor] = useState({ word: '', hint: '', level: 'basic', keywords: '', reference_answer: '' });
@@ -39,16 +40,25 @@ export default function Home() {
 
   const fetchData = async () => {
     setLoading(true);
+    setDbError(null);
     try {
       // 1. Profile
-      const { data: profile } = await supabase.from('profiles').select('*').eq('id', user?.id).single();
-      setProfile(profile);
+      const { data: profile, error: pErr } = await supabase.from('profiles').select('*').eq('id', user?.id).single();
+      if (!pErr) setProfile(profile);
 
       // 2. Decks with anchor counts
-      const { data: decksData } = await supabase
+      const { data: decksData, error: dErr } = await supabase
         .from('decks')
         .select('*, anchors(count)')
         .eq('user_id', user?.id);
+      
+      if (dErr) {
+        if (dErr.code === 'PGRST116' || dErr.message.includes('relation "decks" does not exist')) {
+          setDbError("Tables not initialized. Please run the SQL schema in your Supabase SQL Editor.");
+        } else {
+          setDbError(dErr.message);
+        }
+      }
       setDecks(decksData || []);
 
       // 3. Stats
@@ -219,9 +229,9 @@ export default function Home() {
 
             <input type="file" ref={fileInputRef} hidden accept=".json" onChange={handleImportFile} />
 
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {decks.length === 0 ? (
-                <div className="p-12 text-center border-2 border-dashed border-border rounded-3xl">
+                <div className="p-12 text-center border-2 border-dashed border-border rounded-3xl md:col-span-2">
                   <div className="w-12 h-12 bg-muted/10 rounded-full flex items-center justify-center mx-auto mb-4">
                     <BookOpen size={24} className="text-muted-foreground" />
                   </div>
@@ -261,13 +271,25 @@ export default function Home() {
                     <div className="flex items-center justify-between">
                       <div className="px-3 py-1 rounded-full text-[10px] font-bold bg-primary/10 text-primary flex items-center gap-1.5">
                         <LayoutGrid size={10} />
-                        {deck.anchors?.[0]?.count || 0} anchors
+                        {(deck.anchors?.[0]?.count || 0)} anchors
                       </div>
-                      <Link href={`/study/${deck.id}`}>
-                        <button className="px-5 py-2 rounded-full text-xs font-bold bg-primary text-white shadow-md active:scale-95 transition-transform">
-                          Study
+                      {(deck.anchors?.[0]?.count || 0) > 0 ? (
+                        <Link href={`/study/${deck.id}`}>
+                          <button className="px-5 py-2 rounded-full text-xs font-bold bg-primary text-white shadow-md active:scale-95 transition-transform">
+                            Study
+                          </button>
+                        </Link>
+                      ) : (
+                        <button 
+                          onClick={() => {
+                            setSelectedDeckId(deck.id);
+                            setActiveTab('create');
+                          }}
+                          className="px-5 py-2 rounded-full text-xs font-bold bg-muted/20 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                        >
+                          Add Anchor
                         </button>
-                      </Link>
+                      )}
                     </div>
                   </motion.div>
                 ))
@@ -338,6 +360,16 @@ export default function Home() {
       </header>
 
       <div className="px-6 flex-1">
+        {dbError && (
+          <div className="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 text-[10px] font-bold leading-relaxed shadow-sm flex items-start gap-3">
+            <AlertCircle className="shrink-0 mt-0.5" size={14} />
+            <div>
+              <p className="uppercase tracking-wider mb-1">System Error</p>
+              <p className="font-medium normal-case opacity-80">{dbError}</p>
+            </div>
+          </div>
+        )}
+
         {activeTab === "decks" && (
           <div className="space-y-8 mb-8">
             <div className="grid grid-cols-2 gap-4">
@@ -537,9 +569,9 @@ export default function Home() {
       )}
 
       {/* Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-card/80 backdrop-blur-xl border-t border-border px-6 py-5 flex items-center justify-between z-50 rounded-t-[2rem]">
+      <nav className="fixed bottom-0 left-0 right-0 max-w-4xl mx-auto bg-card/80 backdrop-blur-xl border-t border-border px-6 py-4 flex items-center justify-around z-50 rounded-t-[2.5rem] md:bottom-8 md:left-8 md:right-8 md:w-fit md:mx-auto md:rounded-full md:px-12 md:shadow-lg">
         {[
-          { id: 'decks', icon: LayoutGrid, label: 'Decks' },
+          { id: 'decks', icon: LayoutGrid, label: 'Collections' },
           { id: 'create', icon: Plus, label: 'Anchor' },
           { id: 'settings', icon: SettingsIcon, label: 'Settings' },
         ].map((item) => (

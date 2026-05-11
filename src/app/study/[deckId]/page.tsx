@@ -51,9 +51,13 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
       .select('*')
       .eq('anchor_id', anchorId)
       .order('reviewed_at', { ascending: false })
-      .limit(1)
-      .single();
-    setLastReview(data);
+      .limit(1);
+    
+    if (data && data.length > 0) {
+      setLastReview(data[0]);
+    } else {
+      setLastReview(null);
+    }
   };
 
   const startSession = async () => {
@@ -206,12 +210,12 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
         </div>
       </div>
 
-      <div className="px-6 flex-1 flex flex-col">
+      <div className="px-6 flex-1 flex flex-col max-w-2xl mx-auto w-full">
         <AnimatePresence mode="wait">
           {phase === 'input' ? (
             <motion.div key="input" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex-1 flex flex-col">
               {/* Anchor Card */}
-              <div className="relative p-8 rounded-[2rem] bg-card border border-border shadow-xl mb-8 overflow-hidden group">
+              <div className="relative p-7 md:p-10 rounded-[2rem] bg-card border border-border shadow-xl mb-6 overflow-hidden group transition-all">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:bg-primary/10 transition-colors" />
                 <div className="relative">
                   <div className="flex items-center gap-2 mb-4">

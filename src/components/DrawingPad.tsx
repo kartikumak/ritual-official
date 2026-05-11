@@ -17,18 +17,28 @@ export default function DrawingPad({ onSave, onClose }: DrawingPadProps) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const parent = canvas.parentElement;
+    if (!parent) return;
 
-    // Set scale based on display size
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * 2;
-    canvas.height = rect.height * 2;
-    ctx.scale(2, 2);
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = '#10b981'; // Primary Emerald
+    const resize = () => {
+      const rect = parent.getBoundingClientRect();
+      canvas.width = rect.width * 2;
+      canvas.height = rect.height * 2;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.scale(2, 2);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#10b981';
+      }
+    };
+
+    const observer = new ResizeObserver(resize);
+    observer.observe(parent);
+    resize();
+
+    return () => observer.disconnect();
   }, []);
 
   const getPos = (e: any) => {
