@@ -385,6 +385,24 @@ export default function Home() {
         {renderTabContent()}
       </div>
 
+      {/* Footer Branding */}
+      <footer className="px-6 py-12 mb-12 border-t border-border/50 text-center opacity-40 hover:opacity-100 transition-opacity">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-4">
+          Designed for thinkers.
+        </p>
+        <div className="flex justify-center gap-6 text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-6">
+          <Link href="/about" className="hover:text-primary transition-colors">About</Link>
+          <Link href="/contact" className="hover:text-primary transition-colors">Contact</Link>
+          <Link href="/privacy" className="hover:text-primary transition-colors">Privacy</Link>
+          <Link href="/terms" className="hover:text-primary transition-colors">Terms</Link>
+        </div>
+        <div className="flex items-center justify-center gap-2">
+          <div className="w-4 h-[1px] bg-muted-foreground/30" />
+          <span className="text-[10px] font-medium italic text-muted-foreground">Made by Kartik</span>
+          <div className="w-4 h-[1px] bg-muted-foreground/30" />
+        </div>
+      </footer>
+
       {/* Modal: New Deck */}
       {showNewDeckModal && (
         <div className="fixed inset-0 z-[110] bg-black/40 backdrop-blur-sm flex items-end justify-center p-4">
