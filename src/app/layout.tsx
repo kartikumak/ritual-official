@@ -5,6 +5,7 @@
 
 import "./globals.css";
 import type { Metadata } from "next";
+import { AuthProvider } from "@/src/context/AuthContext";
 
 export const metadata: Metadata = {
   title: "Rituals — Spaced Repetition Mastery",
@@ -25,9 +26,11 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased min-h-screen">
-        <main className="max-w-md mx-auto min-h-screen bg-background border-x border-border shadow-2xl relative overflow-hidden">
-          {children}
-        </main>
+        <AuthProvider>
+          <main className="max-w-md mx-auto min-h-screen bg-background border-x border-border shadow-2xl relative overflow-hidden">
+            {children}
+          </main>
+        </AuthProvider>
       </body>
     </html>
   );

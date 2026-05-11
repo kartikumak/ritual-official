@@ -1,119 +1,317 @@
-"use client";
+'use client';
 
-import Link from "next/link";
 import { motion } from "framer-motion";
-import { BookOpen, Star, Plus, Settings as SettingsIcon, LayoutGrid } from "lucide-react";
-import { useState, useEffect } from "react";
+import { BookOpen, Star, Plus, Settings as SettingsIcon, LayoutGrid, LogOut, Download, Upload, Trash2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { cn, getInitials } from "@/src/lib/utils";
+import { useAuth } from "@/src/context/AuthContext";
+import { getSupabase } from "@/src/lib/supabase";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const { user, signOut, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState("decks");
-  const [profile, setProfile] = useState<{name: string, weekly_goal: number} | null>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const [decks, setDecks] = useState<any[]>([]);
+  const [stats, setStats] = useState({ total: 0, weekly: 0 });
+  const [loading, setLoading] = useState(true);
   const [showNewDeckModal, setShowNewDeckModal] = useState(false);
-  const [keysMissing, setKeysMissing] = useState(false);
+  const [newDeck, setNewDeck] = useState({ name: '', description: '' });
+  const [newAnchor, setNewAnchor] = useState({ word: '', hint: '', level: 'basic', keywords: '', reference_answer: '' });
+  const [selectedDeckId, setSelectedDeckId] = useState<string>('');
+  
+  const supabase = getSupabase();
+  const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setProfile({ name: "Maximus", weekly_goal: 140 });
-    
-    // Check for keys
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      setKeysMissing(true);
+    if (!authLoading && !user) {
+      router.push('/login');
     }
-  }, []);
+  }, [user, authLoading, router]);
+
+  useEffect(() => {
+    if (user) {
+      fetchData();
+    }
+  }, [user]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // 1. Profile
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', user?.id).single();
+      setProfile(profile);
+
+      // 2. Decks with anchor counts
+      const { data: decksData } = await supabase
+        .from('decks')
+        .select('*, anchors(count)')
+        .eq('user_id', user?.id);
+      setDecks(decksData || []);
+
+      // 3. Stats
+      const { count: totalReviews } = await supabase
+        .from('review_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user?.id);
+
+      // Simple weekly count
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const { count: weeklyReviews } = await supabase
+        .from('review_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user?.id)
+        .gte('reviewed_at', sevenDaysAgo.toISOString());
+
+      setStats({ 
+        total: totalReviews || 0, 
+        weekly: weeklyReviews || 0 
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateDeck = async () => {
+    if (!newDeck.name) return;
+    const { error } = await supabase.from('decks').insert({
+      user_id: user?.id,
+      name: newDeck.name,
+      description: newDeck.description
+    });
+    if (!error) {
+      setShowNewDeckModal(false);
+      setNewDeck({ name: '', description: '' });
+      fetchData();
+    }
+  };
+
+  const handleCreateAnchor = async () => {
+    if (!selectedDeckId || !newAnchor.word || !newAnchor.keywords || !newAnchor.reference_answer) {
+      alert("Please fill in all required fields and select a deck.");
+      return;
+    }
+
+    const { error } = await supabase.from('anchors').insert({
+      deck_id: selectedDeckId,
+      word: newAnchor.word,
+      hint: newAnchor.hint,
+      level: newAnchor.level,
+      keywords: newAnchor.keywords.split(',').map(k => k.trim()).filter(Boolean),
+      reference_answer: newAnchor.reference_answer
+    });
+
+    if (!error) {
+      setActiveTab('decks');
+      setNewAnchor({ word: '', hint: '', level: 'basic', keywords: '', reference_answer: '' });
+      setSelectedDeckId('');
+      fetchData();
+      alert("Anchor created successfully!");
+    } else {
+      alert("Error: " + error.message);
+    }
+  };
+
+  const handleDeleteDeck = async (id: string) => {
+    if (!confirm('Are you sure? This will delete all anchors in this deck.')) return;
+    await supabase.from('decks').delete().eq('id', id);
+    fetchData();
+  };
+
+  const handleExportDeck = async (deck: any) => {
+    const { data: anchors } = await supabase.from('anchors').select('*').eq('deck_id', deck.id);
+    const exportData = {
+      version: '1.0',
+      type: 'rituals-deck',
+      deck: {
+        name: deck.name,
+        description: deck.description,
+        anchors: anchors?.map(a => ({
+          word: a.word,
+          hint: a.hint,
+          level: a.level,
+          keywords: a.keywords,
+          reference_answer: a.reference_answer
+        }))
+      }
+    };
+    
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${deck.name.toLowerCase().replace(/\s+/g, '-')}-export.json`;
+    a.click();
+  };
+
+  const handleImportClick = () => fileInputRef.current?.click();
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        if (json.type !== 'rituals-deck') throw new Error('Invalid deck format');
+
+        const { data: deck, error: deckError } = await supabase
+          .from('decks')
+          .insert({ user_id: user?.id, name: json.deck.name, description: json.deck.description })
+          .select()
+          .single();
+
+        if (deckError) throw deckError;
+
+        const anchorsToInsert = json.deck.anchors.map((a: any) => ({
+          deck_id: deck.id,
+          ...a
+        }));
+
+        await supabase.from('anchors').insert(anchorsToInsert);
+        fetchData();
+        alert('Deck imported successfully!');
+      } catch (err: any) {
+        alert('Import failed: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  if (authLoading || (user && loading)) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   const renderTabContent = () => {
     switch (activeTab) {
       case "decks":
         return (
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold">My Decks</h2>
-              <button 
-                onClick={() => setShowNewDeckModal(true)}
-                className="flex items-center gap-1.5 text-xs font-semibold text-primary/80 bg-primary/5 px-3 py-1.5 rounded-full hover:bg-primary/10 transition-colors"
-              >
-                <Plus size={14} />
-                <span>New Deck</span>
-              </button>
+          <section className="animate-in fade-in duration-500">
+            <div className="flex items-center justify-between mb-4 mt-2">
+              <h2 className="text-sm font-bold">My Collections</h2>
+              <div className="flex gap-2">
+                <button 
+                  onClick={handleImportClick}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground bg-muted/10 px-3 py-1.5 rounded-full hover:bg-muted/20 transition-colors"
+                >
+                  <Upload size={12} />
+                  <span>Import</span>
+                </button>
+                <button 
+                  onClick={() => setShowNewDeckModal(true)}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-primary/80 bg-primary/5 px-3 py-1.5 rounded-full hover:bg-primary/10 transition-colors"
+                >
+                  <Plus size={14} />
+                  <span>New Deck</span>
+                </button>
+              </div>
             </div>
 
+            <input type="file" ref={fileInputRef} hidden accept=".json" onChange={handleImportFile} />
+
             <div className="space-y-4">
-              {[
-                { id: '1', name: "E-commerce Landing Page", desc: "UI patterns & conversion concepts", count: 24, active: true },
-                { id: '2', name: "Ed-Tech Market Analysis", desc: "Research methods & key stats", count: 18, active: false },
-              ].map((deck, i) => (
-                <motion.div 
-                  key={deck.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  className={cn(
-                    "p-5 rounded-2xl border border-border shadow-sm transition-all cursor-pointer group",
-                    deck.active ? "bg-primary border-primary" : "bg-card hover:bg-muted/5"
-                  )}
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h3 className={cn("text-base font-bold", deck.active ? "text-white" : "text-foreground")}>
-                        {deck.name}
-                      </h3>
-                      <p className={cn("text-xs mt-1", deck.active ? "text-white/70" : "text-muted-foreground")}>
-                        {deck.desc}
-                      </p>
-                    </div>
-                    <div className={cn("p-2 rounded-xl", deck.active ? "bg-white/20" : "bg-muted/30")}>
-                      <BookOpen size={18} className={deck.active ? "text-white" : "text-primary"} />
-                    </div>
+              {decks.length === 0 ? (
+                <div className="p-12 text-center border-2 border-dashed border-border rounded-3xl">
+                  <div className="w-12 h-12 bg-muted/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <BookOpen size={24} className="text-muted-foreground" />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className={cn("px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-1.5", deck.active ? "bg-white/20 text-white" : "bg-primary/10 text-primary")}>
-                      <LayoutGrid size={10} />
-                      {deck.count} anchors
+                  <h3 className="text-sm font-bold mb-1">Begin your Rituals</h3>
+                  <p className="text-xs text-muted-foreground mb-4">Create your first deck to start anchoring.</p>
+                  <button onClick={() => setShowNewDeckModal(true)} className="bg-primary text-white px-6 py-2 rounded-full text-xs font-bold">
+                    Create Deck
+                  </button>
+                </div>
+              ) : (
+                decks.map((deck, i) => (
+                  <motion.div 
+                    key={deck.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="p-5 rounded-2xl border border-border bg-card shadow-sm group relative"
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <h3 className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
+                          {deck.name}
+                        </h3>
+                        <p className="text-xs mt-1 text-muted-foreground line-clamp-2">
+                          {deck.description || "No description provided."}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                         <button onClick={() => handleExportDeck(deck)} className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground" title="Export">
+                            <Download size={14} />
+                         </button>
+                         <button onClick={() => handleDeleteDeck(deck.id)} className="p-2 rounded-lg hover:bg-rose-50 text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity" title="Delete">
+                            <Trash2 size={14} />
+                         </button>
+                      </div>
                     </div>
-                    <Link href={`/study?deckId=${deck.id}`}>
-                      <button className={cn(
-                        "px-4 py-1.5 rounded-full text-xs font-bold shadow-md transition-transform active:scale-95",
-                        deck.active ? "bg-white text-primary" : "bg-primary text-white"
-                      )}>
-                        Study
-                      </button>
-                    </Link>
-                  </div>
-                </motion.div>
-              ))}
+                    <div className="flex items-center justify-between">
+                      <div className="px-3 py-1 rounded-full text-[10px] font-bold bg-primary/10 text-primary flex items-center gap-1.5">
+                        <LayoutGrid size={10} />
+                        {deck.anchors?.[0]?.count || 0} anchors
+                      </div>
+                      <Link href={`/study/${deck.id}`}>
+                        <button className="px-5 py-2 rounded-full text-xs font-bold bg-primary text-white shadow-md active:scale-95 transition-transform">
+                          Study
+                        </button>
+                      </Link>
+                    </div>
+                  </motion.div>
+                ))
+              )}
             </div>
           </section>
         );
-      case "study":
-        return (
-          <div className="flex flex-col items-center justify-center text-center py-12">
-            <Star size={48} className="text-primary/20 mb-4" />
-            <h3 className="font-bold mb-2">Ready for a Session?</h3>
-            <p className="text-xs text-muted-foreground mb-6">Select a deck below to start retrieval.</p>
-            <button onClick={() => setActiveTab('decks')} className="bg-primary text-white px-6 py-2 rounded-full text-xs font-bold">
-              View My Decks
-            </button>
-          </div>
-        );
       case "settings":
         return (
-          <div className="space-y-4">
-             <div className="p-4 rounded-2xl bg-card border border-border flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold">Daily Reminders</p>
-                  <p className="text-[10px] text-muted-foreground">Notify me at 9:00 AM</p>
-                </div>
-                <div className="w-10 h-5 bg-primary rounded-full relative">
-                  <div className="absolute right-1 top-1 w-3 h-3 bg-white rounded-full" />
+          <div className="space-y-6 pt-2 animate-in slide-in-from-bottom-2 duration-300">
+             <div>
+                <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-3 ml-1">Learning Behavior</h3>
+                <div className="space-y-2">
+                   <div className="p-5 rounded-2xl bg-card border border-border flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-bold">Concept Reveal Hints</p>
+                        <p className="text-[10px] text-muted-foreground">Show context clues by default</p>
+                      </div>
+                      <div className="w-10 h-6 bg-primary rounded-full relative"><div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm" /></div>
+                   </div>
                 </div>
              </div>
-             <div className="p-4 rounded-2xl bg-card border border-border flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold">Dark Mode</p>
-                  <p className="text-[10px] text-muted-foreground">Sync with system</p>
-                </div>
-                <div className="w-10 h-5 bg-muted/20 rounded-full relative">
-                  <div className="absolute left-1 top-1 w-3 h-3 bg-white rounded-full" />
+
+             <div>
+                <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-3 ml-1">Account Controls</h3>
+                <div className="space-y-2">
+                   <div className="p-5 rounded-2xl bg-card border border-border">
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-lg">
+                           {getInitials(profile?.name || user?.email || "?")}
+                        </div>
+                        <div>
+                           <p className="text-sm font-bold">{profile?.name || "Member"}</p>
+                           <p className="text-xs text-muted-foreground">{user?.email}</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={signOut}
+                        className="w-full h-12 rounded-xl bg-rose-50 text-rose-600 font-bold text-xs flex items-center justify-center gap-2 hover:bg-rose-100 transition-colors"
+                      >
+                        <LogOut size={14} />
+                        Sign Out & Disconnect
+                      </button>
+                   </div>
                 </div>
              </div>
           </div>
@@ -124,134 +322,121 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen pb-20">
-      {/* Header */}
+    <div className="flex flex-col min-h-screen pb-24">
       <header className="px-6 pt-12 pb-6 flex items-center justify-between">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium mb-1">
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+          <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-bold mb-1">
             Welcome back
           </p>
           <h1 className="text-2xl font-serif font-bold text-foreground">
             {profile?.name || "Explorer"}
           </h1>
-        </div>
-        <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
+        </motion.div>
+        <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shadow-inner ring-4 ring-white">
           {profile ? getInitials(profile.name) : "U"}
         </div>
       </header>
 
       <div className="px-6 flex-1">
-        {keysMissing && (
-          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-[11px] text-amber-800 leading-relaxed">
-            <span className="font-bold block mb-1">⚠️ Supabase Keys Missing</span>
-            Please add <code className="bg-amber-100 px-1 rounded">NEXT_PUBLIC_SUPABASE_URL</code> and <code className="bg-amber-100 px-1 rounded">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to your environment secrets to enable persistent storage and real authentication.
-          </div>
-        )}
         {activeTab === "decks" && (
-          <>
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 gap-4 mb-8">
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-4 rounded-2xl bg-card border border-border shadow-sm"
-              >
-                <p className="text-[11px] text-muted-foreground font-medium mb-1">Reviews Done</p>
-                <p className="text-3xl font-bold text-primary">142</p>
-                <p className="text-[10px] text-muted-foreground mt-1">anchors anchored</p>
+          <div className="space-y-8 mb-8">
+            <div className="grid grid-cols-2 gap-4">
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-4 rounded-2xl bg-card border border-border shadow-sm">
+                <p className="text-[11px] text-muted-foreground font-bold mb-1">Total Recall</p>
+                <p className="text-3xl font-bold text-primary">{stats.total}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">successful anchors</p>
               </motion.div>
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="p-4 rounded-2xl bg-card border border-border shadow-sm"
-              >
-                <p className="text-[11px] text-muted-foreground font-medium mb-1">Active Decks</p>
-                <p className="text-3xl font-bold">3</p>
-                <p className="text-[10px] text-muted-foreground mt-1">topics tracked</p>
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="p-4 rounded-2xl bg-card border border-border shadow-sm">
+                <p className="text-[11px] text-muted-foreground font-bold mb-1">This Week</p>
+                <p className="text-3xl font-bold">{stats.weekly}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">active reviews</p>
               </motion.div>
             </div>
 
-            {/* Weekly Goal Progress */}
-            <section className="mb-8">
-              <div className="p-5 rounded-2xl bg-card border border-border shadow-sm flex items-center gap-5">
+            <section>
+              <div className="p-5 rounded-3xl bg-primary text-white shadow-xl relative overflow-hidden flex items-center gap-5">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
                 <div className="relative w-16 h-16 shrink-0">
                   <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="10" className="text-muted/10" />
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="8" className="text-white/20" />
                     <motion.circle 
-                      cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="10" 
+                      cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="8" 
                       strokeDasharray="251.2"
                       initial={{ strokeDashoffset: 251.2 }}
-                      animate={{ strokeDashoffset: 251.2 * (1 - 0.65) }}
+                      animate={{ strokeDashoffset: 251.2 * (1 - Math.min(stats.weekly / (profile?.weekly_goal || 140), 1)) }}
                       transition={{ duration: 1.5, ease: "easeOut" }}
-                      className="text-primary"
+                      className="text-white"
+                      strokeLinecap="round"
                     />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[13px] font-bold">65%</span>
+                    <span className="text-[13px] font-bold">{Math.round((stats.weekly / (profile?.weekly_goal || 140)) * 100)}%</span>
                   </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-semibold mb-1">Weekly Goal</h3>
-                  <p className="text-xs text-muted-foreground">91 / {profile?.weekly_goal || 140} anchors reviewed this week</p>
+                <div className="relative">
+                  <h3 className="text-sm font-bold mb-1">Weekly Target</h3>
+                  <p className="text-[11px] text-white/70">{stats.weekly} of {profile?.weekly_goal || 140} anchors anchored</p>
                 </div>
               </div>
             </section>
-          </>
+          </div>
         )}
 
         {renderTabContent()}
       </div>
 
-      {/* Decks Section */}
+      {/* Modal: New Deck */}
       {showNewDeckModal && (
-        <div className="fixed inset-0 z-[110] bg-black/40 backdrop-blur-sm flex items-end justify-center">
-          <motion.div 
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            className="w-full max-w-md bg-card rounded-t-[2.5rem] p-8 shadow-2xl border-t border-border"
-          >
+        <div className="fixed inset-0 z-[110] bg-black/40 backdrop-blur-sm flex items-end justify-center p-4">
+          <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} className="w-full max-w-md bg-card rounded-[2.5rem] p-8 shadow-2xl border border-border">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold">New Deck</h2>
-              <button 
-                onClick={() => setShowNewDeckModal(false)}
-                className="w-8 h-8 rounded-full bg-muted/10 flex items-center justify-center"
-              >
-                ✕
-              </button>
+              <h2 className="text-xl font-bold font-serif">New Collection</h2>
+              <button onClick={() => setShowNewDeckModal(false)} className="w-8 h-8 rounded-full bg-muted/20 flex items-center justify-center">✕</button>
             </div>
-
-            <div className="space-y-4 mb-8">
+            <div className="space-y-5 mb-8">
               <div>
-                <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1 mb-1 block">Deck Name</label>
-                <input className="w-full h-12 bg-muted/5 border border-border rounded-xl px-4 text-sm focus:border-primary outline-none" placeholder="e.g. JavaScript Frameworks" />
+                <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1 mb-1.5 block">Collection Name</label>
+                <input 
+                  value={newDeck.name}
+                  onChange={(e) => setNewDeck({...newDeck, name: e.target.value})}
+                  className="w-full h-14 bg-muted/5 border border-border rounded-xl px-5 text-sm focus:border-primary outline-none transition-all" 
+                  placeholder="e.g. Behavioral Economics" 
+                />
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1 mb-1 block">Description</label>
-                <textarea className="w-full h-24 bg-muted/5 border border-border rounded-xl p-4 text-sm focus:border-primary outline-none resize-none" placeholder="What will you learn here?" />
+                <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1 mb-1.5 block">Goal / Purpose</label>
+                <textarea 
+                  value={newDeck.description}
+                  onChange={(e) => setNewDeck({...newDeck, description: e.target.value})}
+                  className="w-full h-28 bg-muted/5 border border-border rounded-xl p-5 text-sm focus:border-primary outline-none resize-none transition-all leading-relaxed" 
+                  placeholder="What knowledge will be anchored here?" 
+                />
               </div>
             </div>
-
-            <button className="w-full h-14 bg-primary text-white font-bold rounded-2xl shadow-lg ring-offset-2 active:scale-95 transition-all">
-              Create Deck
+            <button 
+              onClick={handleCreateDeck}
+              disabled={!newDeck.name}
+              className="w-full h-14 bg-primary text-white font-bold rounded-2xl shadow-lg ring-offset-2 active:scale-95 transition-all disabled:opacity-50"
+            >
+              Initialize Collection
             </button>
           </motion.div>
         </div>
       )}
 
-      {/* Add Anchor Modal */}
+      {/* Modal: New Anchor */}
       {activeTab === 'create' && (
-        <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-end justify-center">
+        <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-end justify-center p-4">
           <motion.div 
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
-            className="w-full max-w-md bg-card rounded-t-[2.5rem] p-8 shadow-2xl border-t border-border"
+            className="w-full max-w-md bg-card rounded-[2.5rem] p-8 shadow-2xl border border-border overflow-y-auto max-h-[90vh]"
           >
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold">Add Anchor</h2>
+              <h2 className="text-xl font-bold font-serif">Deep Anchor</h2>
               <button 
                 onClick={() => setActiveTab('decks')}
-                className="w-8 h-8 rounded-full bg-muted/10 flex items-center justify-center"
+                className="w-8 h-8 rounded-full bg-muted/10 flex items-center justify-center font-bold"
               >
                 ✕
               </button>
@@ -259,58 +444,97 @@ export default function Home() {
 
             <div className="space-y-4 mb-8">
               <div>
-                <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1 mb-1 block">Anchor Word</label>
-                <input className="w-full h-12 bg-muted/5 border border-border rounded-xl px-4 text-sm focus:border-primary outline-none" placeholder="e.g. Social Proof" />
+                <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1 mb-1 block">Target Collection</label>
+                <select 
+                  value={selectedDeckId}
+                  onChange={(e) => setSelectedDeckId(e.target.value)}
+                  className="w-full h-12 bg-muted/5 border border-border rounded-xl px-4 text-sm focus:border-primary outline-none appearance-none"
+                >
+                  <option value="">Select a deck...</option>
+                  {decks.map(d => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1 mb-1 block">Anchor Concept</label>
+                <input 
+                  value={newAnchor.word}
+                  onChange={(e) => setNewAnchor({...newAnchor, word: e.target.value})}
+                  className="w-full h-12 bg-muted/5 border border-border rounded-xl px-4 text-sm focus:border-primary outline-none" 
+                  placeholder="e.g. Behavioral Sunk Cost" 
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                  <div>
                     <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1 mb-1 block">Level</label>
-                    <select className="w-full h-12 bg-muted/5 border border-border rounded-xl px-3 text-sm focus:border-primary outline-none appearance-none">
-                      <option>Basic</option>
-                      <option>Intermediate</option>
-                      <option>Advanced</option>
+                    <select 
+                      value={newAnchor.level}
+                      onChange={(e) => setNewAnchor({...newAnchor, level: e.target.value})}
+                      className="w-full h-12 bg-muted/5 border border-border rounded-xl px-3 text-sm focus:border-primary outline-none appearance-none"
+                    >
+                      <option value="basic">Basic</option>
+                      <option value="intermediate">Intermediate</option>
+                      <option value="advanced">Advanced</option>
                     </select>
                  </div>
                  <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1 mb-1 block">Hint</label>
-                    <input className="w-full h-12 bg-muted/5 border border-border rounded-xl px-4 text-sm focus:border-primary outline-none" placeholder="Context..." />
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1 mb-1 block">Category Hint</label>
+                    <input 
+                      value={newAnchor.hint}
+                      onChange={(e) => setNewAnchor({...newAnchor, hint: e.target.value})}
+                      className="w-full h-12 bg-muted/5 border border-border rounded-xl px-4 text-sm focus:border-primary outline-none" 
+                      placeholder="Context..." 
+                    />
                  </div>
               </div>
               <div>
                 <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1 mb-1 block">Keywords (comma-separated)</label>
-                <input className="w-full h-12 bg-muted/5 border border-border rounded-xl px-4 text-sm focus:border-primary outline-none" placeholder="trust, reviews, users" />
+                <input 
+                  value={newAnchor.keywords}
+                  onChange={(e) => setNewAnchor({...newAnchor, keywords: e.target.value})}
+                  className="w-full h-12 bg-muted/5 border border-border rounded-xl px-4 text-sm focus:border-primary outline-none" 
+                  placeholder="investment, bias, loss, psychology" 
+                />
               </div>
               <div>
                 <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1 mb-1 block">Reference Truth</label>
-                <textarea className="w-full h-24 bg-muted/5 border border-border rounded-xl p-4 text-sm focus:border-primary outline-none resize-none" placeholder="The formal explanation..." />
+                <textarea 
+                  value={newAnchor.reference_answer}
+                  onChange={(e) => setNewAnchor({...newAnchor, reference_answer: e.target.value})}
+                  className="w-full h-24 bg-muted/5 border border-border rounded-xl p-4 text-sm focus:border-primary outline-none resize-none leading-relaxed" 
+                  placeholder="The ground truth explanation for recall verification..." 
+                />
               </div>
             </div>
 
-            <button className="w-full h-14 bg-primary text-white font-bold rounded-2xl shadow-lg ring-offset-2 active:scale-95 transition-all">
-              Save Anchor
+            <button 
+              onClick={handleCreateAnchor}
+              className="w-full h-14 bg-emerald-600 text-white font-bold rounded-2xl shadow-lg ring-offset-2 active:scale-95 transition-all"
+            >
+              Anchor Concept
             </button>
           </motion.div>
         </div>
       )}
 
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-card/80 backdrop-blur-xl border-t border-border px-6 py-4 flex items-center justify-between z-50">
+      {/* Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-card/80 backdrop-blur-xl border-t border-border px-6 py-5 flex items-center justify-between z-50 rounded-t-[2rem]">
         {[
           { id: 'decks', icon: LayoutGrid, label: 'Decks' },
-          { id: 'study', icon: Star, label: 'Study' },
-          { id: 'create', icon: Plus, label: 'Create' },
+          { id: 'create', icon: Plus, label: 'Anchor' },
           { id: 'settings', icon: SettingsIcon, label: 'Settings' },
         ].map((item) => (
           <button 
             key={item.id}
             onClick={() => setActiveTab(item.id)}
             className={cn(
-              "flex flex-col items-center gap-1 w-12 transition-colors",
-              activeTab === item.id ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              "flex flex-col items-center gap-1.5 w-16 transition-all duration-300",
+              activeTab === item.id ? "text-primary scale-110" : "text-muted-foreground hover:text-foreground"
             )}
           >
-            <item.icon size={20} strokeWidth={activeTab === item.id ? 2.5 : 2} />
-            <span className="text-[10px] font-bold">{item.label}</span>
+            <item.icon size={22} strokeWidth={activeTab === item.id ? 2.5 : 2} />
+            <span className="text-[10px] font-bold uppercase tracking-wider">{item.label}</span>
           </button>
         ))}
       </nav>
