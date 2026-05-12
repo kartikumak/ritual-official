@@ -158,158 +158,180 @@ export default function Home() {
   }
 
   const renderDashboard = () => (
-    <div className="space-y-6 pb-24 max-w-[420px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-8 pb-24 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* App Header */}
       <header className="flex items-center justify-between py-10 px-0">
         <div>
-          <p className="text-[10px] font-medium tracking-[0.13em] uppercase text-muted mb-1">Welcome back</p>
-          <h1 className="text-[26px] font-serif font-normal text-foreground leading-tight">{profile?.name || "Max"}</h1>
+          <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted mb-1">Welcome back</p>
+          <h1 className="text-3xl md:text-4xl font-serif font-normal text-foreground leading-tight tracking-tight">{profile?.name || "Max"}</h1>
         </div>
-        <Link href="/profile" className="w-[42px] h-[42px] rounded-full bg-primary-lighter text-primary font-semibold flex items-center justify-center text-[15px] shrink-0 hover:bg-primary-light transition-colors">
+        <Link href="/profile" className="w-[50px] h-[50px] rounded-full bg-primary-lighter text-primary font-bold flex items-center justify-center text-lg shrink-0 hover:bg-primary-light transition-all shadow-sm">
           {getInitials(profile?.name || user?.email || "M")}
         </Link>
       </header>
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="card-sm animate-in fade-in slide-in-from-bottom-2 duration-500 delay-75">
-          <p className="text-[11px] text-muted mb-1 font-medium">Total Reviewed</p>
-          <div className="flex items-baseline gap-1">
-            <span className="text-[32px] font-semibold text-primary leading-none">{stats.total}</span>
-            <span className="text-[11px] text-muted">anchors</span>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          {/* Stats Row */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="card-md animate-in fade-in slide-in-from-bottom-2 duration-500 delay-75">
+              <p className="text-[11px] text-muted mb-2 font-bold uppercase tracking-wider">Total Reviewed</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl font-bold text-primary leading-none">{stats.total}</span>
+                <span className="text-xs text-muted font-medium">anchors</span>
+              </div>
+            </div>
+            <div className="card-md animate-in fade-in slide-in-from-bottom-2 duration-500 delay-150">
+              <p className="text-[11px] text-muted mb-2 font-bold uppercase tracking-wider">Active Decks</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl font-bold text-foreground leading-none">{decks.length}</span>
+                <span className="text-xs text-muted font-medium">collections</span>
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="card-sm animate-in fade-in slide-in-from-bottom-2 duration-500 delay-150">
-          <p className="text-[11px] text-muted mb-1 font-medium">Active Decks</p>
-          <div className="flex items-baseline gap-1">
-            <span className="text-[32px] font-semibold text-foreground leading-none">{decks.length}</span>
-            <span className="text-[11px] text-muted">collections</span>
-          </div>
-        </div>
-      </div>
 
-      {/* Activity Graph */}
-      <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-200">
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-[13px] font-bold text-foreground">Activity</span>
-            <div className="flex bg-secondary p-1 rounded-full">
-               <button 
-                onClick={() => setChartRange("Week")}
-                className={cn(
-                  "px-4 py-1.5 rounded-full text-[11px] font-bold transition-all",
-                  chartRange === "Week" ? "bg-primary text-white shadow-md" : "text-muted hover:text-foreground"
-                )}
-               >
-                 Week
-               </button>
-               <button 
-                onClick={() => setChartRange("Month")}
-                className={cn(
-                  "px-4 py-1.5 rounded-full text-[11px] font-bold transition-all",
-                  chartRange === "Month" ? "bg-primary text-white shadow-md" : "text-muted hover:text-foreground"
-                )}
-               >
-                 Month
-               </button>
+          {/* Activity Graph */}
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-200">
+            <div className="card">
+              <div className="flex items-center justify-between mb-6">
+                <span className="text-sm font-bold text-foreground">Activity</span>
+                <div className="flex bg-secondary p-1 rounded-full">
+                  <button 
+                    onClick={() => setChartRange("Week")}
+                    className={cn(
+                      "px-4 py-1.5 rounded-full text-[11px] font-bold transition-all",
+                      chartRange === "Week" ? "bg-primary text-white shadow-md" : "text-muted hover:text-foreground"
+                    )}
+                  >
+                    Week
+                  </button>
+                  <button 
+                    onClick={() => setChartRange("Month")}
+                    className={cn(
+                      "px-4 py-1.5 rounded-full text-[11px] font-bold transition-all",
+                      chartRange === "Month" ? "bg-primary text-white shadow-md" : "text-muted hover:text-foreground"
+                    )}
+                  >
+                    Month
+                  </button>
+                </div>
+              </div>
+              <div className="h-[200px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData}>
+                    <defs>
+                      <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.18}/>
+                        <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <XAxis 
+                      dataKey="day" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fontSize: 11, fill: 'var(--color-muted)', fontFamily: 'DM Sans' }} 
+                      dy={10}
+                    />
+                    <Tooltip 
+                      cursor={{ stroke: 'var(--color-border)', strokeWidth: 1 }}
+                      contentStyle={{ 
+                        borderRadius: '18px', 
+                        border: '1px solid var(--color-border)', 
+                        background: 'var(--color-card)',
+                        boxShadow: 'var(--shadow-sm)',
+                        fontSize: '11px',
+                        fontFamily: 'DM Sans'
+                      }} 
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="count" 
+                      stroke="var(--color-primary)" 
+                      strokeWidth={2.5}
+                      fillOpacity={1} 
+                      fill="url(#colorCount)" 
+                      animationDuration={1500}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-          </div>
-          <div className="h-[140px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.18}/>
-                    <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <XAxis 
-                  dataKey="day" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fontSize: 11, fill: 'var(--color-muted)', fontFamily: 'DM Sans' }} 
-                  dy={10}
-                />
-                <Tooltip 
-                  cursor={{ stroke: 'var(--color-border)', strokeWidth: 1 }}
-                  contentStyle={{ 
-                    borderRadius: '10px', 
-                    border: '1px solid var(--color-border)', 
-                    background: '#fff',
-                    boxShadow: 'var(--shadow-sm)',
-                    fontSize: '11px',
-                    fontFamily: 'DM Sans'
-                  }} 
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="count" 
-                  stroke="var(--color-primary)" 
-                  strokeWidth={2.5}
-                  fillOpacity={1} 
-                  fill="url(#colorCount)" 
-                  animationDuration={1500}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
           </div>
         </div>
-      </div>
 
-      {/* Weekly Progress */}
-      <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-300">
-        <div className="card">
-          <p className="text-[13px] font-bold text-foreground mb-4">Weekly Goal</p>
-          <div className="flex items-center gap-5">
-            <div className="relative w-16 h-16 shrink-0">
-               <svg className="w-full h-full -rotate-90">
-                 <circle cx="32" cy="32" r="26" className="fill-none stroke-secondary stroke-[7px]" />
-                 <motion.circle 
-                  cx="32" cy="32" r="26" 
-                  className="fill-none stroke-primary stroke-[7px] stroke-round"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: Math.min(1, stats.weekly / (profile?.weekly_goal || 140)) }}
-                  transition={{ duration: 1.5, ease: "easeOut" }}
-                 />
-               </svg>
-               <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-[12px] font-bold text-primary">{Math.round((stats.weekly / (profile?.weekly_goal || 140)) * 100)}%</span>
-               </div>
-            </div>
-            <div>
-              <div className="text-[22px] font-bold text-primary leading-none mb-1">{stats.weekly} <span className="text-[13px] text-muted font-medium">/ {profile?.weekly_goal || 140}</span></div>
-              <p className="text-[11px] text-muted uppercase tracking-[0.05em]">anchors anchored this week</p>
+        <div className="space-y-6">
+          {/* Weekly Progress */}
+          <div className="animate-in fade-in slide-in-from-right-2 duration-500 delay-300">
+            <div className="card h-full flex flex-col justify-center">
+              <p className="text-sm font-bold text-foreground mb-6">Weekly Goal</p>
+              <div className="flex items-center gap-6">
+                <div className="relative w-20 h-20 shrink-0">
+                  <svg className="w-full h-full -rotate-90">
+                    <circle cx="40" cy="40" r="34" className="fill-none stroke-secondary stroke-[8px]" />
+                    <motion.circle 
+                      cx="40" cy="40" r="34" 
+                      className="fill-none stroke-primary stroke-[8px] stroke-round"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: Math.min(1, stats.weekly / (profile?.weekly_goal || 140)) }}
+                      transition={{ duration: 1.5, ease: "easeOut" }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-sm font-bold text-primary">{Math.round((stats.weekly / (profile?.weekly_goal || 140)) * 100)}%</span>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold text-primary leading-none mb-1.5">{stats.weekly} <span className="text-sm text-muted font-medium">/ {profile?.weekly_goal || 140}</span></div>
+                  <p className="text-[10px] text-muted uppercase font-bold tracking-widest leading-tight">anchors anchored this week</p>
+                </div>
+              </div>
             </div>
           </div>
+
+          {/* Marketplace Entry */}
+          <Link href="/marketplace" className="block animate-in fade-in slide-in-from-right-2 duration-500 delay-500">
+            <div className="card bg-primary text-white border-transparent flex items-center justify-between hover:bg-primary-light transition-all shadow-[--shadow-glow-purple] py-8">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white">
+                  <ShoppingBag size={26} />
+                </div>
+                <div>
+                  <p className="text-base font-bold">Ritual Library</p>
+                  <p className="text-xs text-white/70">Acquire community models</p>
+                </div>
+              </div>
+              <ChevronRight size={20} className="text-white/60" />
+            </div>
+          </Link>
         </div>
       </div>
 
       {/* Decks Section */}
-      <section className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-500 delay-400">
+      <section className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500 delay-400">
         <div className="flex items-center justify-between px-1">
-          <h2 className="text-[13px] font-bold text-foreground">My Decks</h2>
+          <h2 className="text-base font-bold text-foreground">My Virtual Models</h2>
           <button 
             onClick={() => setShowNewDeckModal(true)}
-            className="btn-primary btn-sm px-4 py-1.5 rounded-full text-[11px] font-bold flex items-center gap-1.5"
+            className="btn-primary btn-sm px-6 py-2 rounded-full text-xs font-bold flex items-center gap-2"
           >
-            <Plus size={12} />
-            New deck
+            <Plus size={14} />
+            Initialize Deck
           </button>
         </div>
 
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {decks.map((deck, i) => (
             <motion.div 
               key={deck.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 + i * 0.1 }}
-              className="bg-card rounded-[--radius] p-4 border border-border border-l-[3px] border-l-primary-light shadow-[--shadow-sm] hover:shadow-[--shadow-md] transition-all group cursor-pointer active:scale-[0.99]"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5 + i * 0.05 }}
+              className="card-md group relative overflow-hidden h-full flex flex-col border-l-[4px] border-l-primary"
             >
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="text-[14px] font-semibold text-foreground leading-tight">{deck.name}</h3>
-                  <p className="text-[11px] text-muted mt-0.5 line-clamp-1">{deck.description || "Synthesize domain knowledge"}</p>
+              <div className="flex items-start justify-between mb-4">
+                <div className="max-w-[80%]">
+                  <h3 className="text-base font-bold text-foreground leading-tight line-clamp-1">{deck.name}</h3>
+                  <p className="text-xs text-muted mt-1 line-clamp-2">{deck.description || "Structured domain synthesis"}</p>
                 </div>
                 <button 
                   onClick={async (e) => {
@@ -319,20 +341,18 @@ export default function Home() {
                       if(!error) fetchData();
                     }
                   }}
-                  className="text-muted p-1 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+                  className="text-muted p-2 hover:text-accent-orange transition-colors"
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={16} />
                 </button>
               </div>
-              <div className="flex items-center justify-between mt-3">
-                <div className="flex items-center gap-1.5 text-[11px] text-muted font-medium uppercase tracking-tight">
-                   <div className="w-5 h-5 bg-primary-lighter rounded flex items-center justify-center">
-                     <BookOpen size={10} className="text-primary" />
-                   </div>
-                   {deck.anchorCount} anchors
+              <div className="mt-auto flex items-center justify-between pt-4 border-t border-border">
+                <div className="badge-primary px-3 py-1">
+                  <BookOpen size={12} className="mr-1.5" />
+                  {deck.anchorCount} Anchors
                 </div>
                 <Link href={`/study/${deck.id}`}>
-                  <button className="btn-primary btn-sm px-5 py-1.5 font-bold">
+                  <button className="btn-primary btn-sm px-6 py-2 font-bold uppercase tracking-wider text-[10px]">
                     Study
                   </button>
                 </Link>
@@ -340,28 +360,16 @@ export default function Home() {
             </motion.div>
           ))}
           {decks.length === 0 && (
-            <div className="card text-center py-10 opacity-60 bg-secondary/30 border-dashed border-2">
-              <p className="text-[13px] font-medium text-muted italic">Initialize a new cognitive domain...</p>
+            <div className="col-span-full card-lg border-dashed border-2 bg-muted-bg/50 flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-16 h-16 rounded-full bg-muted-bg flex items-center justify-center mb-4 text-muted">
+                <LayoutGrid size={32} />
+              </div>
+              <h3 className="text-lg font-bold text-foreground mb-1">No Decks Manifested</h3>
+              <p className="text-sm text-muted">Begin your mastery path by creating a new ritual domain.</p>
             </div>
           )}
         </div>
       </section>
-
-      {/* Marketplace Entry */}
-      <Link href="/marketplace" className="block animate-in fade-in slide-in-from-bottom-2 duration-500 delay-500">
-        <div className="card bg-primary text-white border-transparent flex items-center justify-between hover:bg-primary-light transition-all shadow-[--shadow-glow-purple]">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white">
-              <ShoppingBag size={22} />
-            </div>
-            <div>
-              <p className="text-[14px] font-bold">Ritual Marketplace</p>
-              <p className="text-[11px] text-white/70">Aquire shared neural models</p>
-            </div>
-          </div>
-          <ChevronRight size={18} className="text-white/60" />
-        </div>
-      </Link>
     </div>
   );
 
@@ -455,7 +463,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background relative selection:bg-primary/20">
-      <main className="px-5 max-w-[420px] mx-auto min-h-screen pb-32">
+      <main className="px-5 max-w-7xl mx-auto min-h-screen pb-32">
         <AnimatePresence mode="wait">
           {activeTab === 'decks' && (
             <motion.div key="dashboard">
@@ -472,7 +480,7 @@ export default function Home() {
 
       {/* Navigation Rail */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-3xl border-t border-border">
-        <div className="max-w-[420px] mx-auto h-[72px] flex justify-around items-center px-4">
+        <div className="max-w-7xl mx-auto h-[72px] flex justify-around items-center px-4 md:px-12">
           {[
             { id: 'decks', icon: LayoutGrid, label: 'Decks' },
             { id: 'study', icon: Star, label: 'Study', onClick: () => {
