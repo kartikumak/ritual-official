@@ -10,6 +10,7 @@ create table if not exists public.profiles (
   email text unique,
   avatar_url text,
   weekly_goal int default 140,
+  total_rituals int default 0,
   settings jsonb default '{"reminders": true, "haptics": true}'::jsonb,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -20,6 +21,7 @@ create table if not exists public.decks (
   user_id uuid references public.profiles(id) on delete cascade not null,
   name text not null,
   description text,
+  category text default 'General',
   is_public boolean default false,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -81,6 +83,18 @@ create table if not exists public.sessions (
   ended_at timestamp with time zone
 );
 
+-- Migration logic for existing tables
+do $$
+begin
+  if not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'decks' and column_name = 'category') then
+    alter table public.decks add column category text default 'General';
+  end if;
+  if not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'total_rituals') then
+    alter table public.profiles add column total_rituals int default 0;
+  end if;
+end
+$$;
+
 -- RLS (Row Level Security)
 alter table public.profiles enable row level security;
 alter table public.decks enable row level security;
@@ -92,43 +106,46 @@ alter table public.sessions enable row level security;
 -- Policies (Using DO blocks to avoid errors if they already exist)
 do $$
 begin
-  if not exists (select 1 from pg_policies where policyname = 'Users can view their own profile') then
+  if not exists (select 1 from pg_policies where tablename = 'profiles' and policyname = 'Users can insert their own profile') then
+    create policy "Users can insert their own profile" on public.profiles for insert with check (auth.uid() = id);
+  end if;
+  if not exists (select 1 from pg_policies where tablename = 'profiles' and policyname = 'Users can view their own profile') then
     create policy "Users can view their own profile" on public.profiles for select using (auth.uid() = id);
   end if;
-  if not exists (select 1 from pg_policies where policyname = 'Users can update their own profile') then
+  if not exists (select 1 from pg_policies where tablename = 'profiles' and policyname = 'Users can update their own profile') then
     create policy "Users can update their own profile" on public.profiles for update using (auth.uid() = id);
   end if;
-  if not exists (select 1 from pg_policies where policyname = 'Public profiles are viewable by everyone') then
+  if not exists (select 1 from pg_policies where tablename = 'profiles' and policyname = 'Public profiles are viewable by everyone') then
     create policy "Public profiles are viewable by everyone" on public.profiles for select using (true);
   end if;
 
-  if not exists (select 1 from pg_policies where policyname = 'Users can manage their own decks') then
+  if not exists (select 1 from pg_policies where tablename = 'decks' and policyname = 'Users can manage their own decks') then
     create policy "Users can manage their own decks" on public.decks for all using (auth.uid() = user_id);
   end if;
-  if not exists (select 1 from pg_policies where policyname = 'Public decks are viewable by everyone') then
+  if not exists (select 1 from pg_policies where tablename = 'decks' and policyname = 'Public decks are viewable by everyone') then
     create policy "Public decks are viewable by everyone" on public.decks for select using (is_public = true);
   end if;
 
-  if not exists (select 1 from pg_policies where policyname = 'Users can manage anchors in their decks') then
+  if not exists (select 1 from pg_policies where tablename = 'anchors' and policyname = 'Users can manage anchors in their decks') then
     create policy "Users can manage anchors in their decks" on public.anchors for all using (
       exists (select 1 from public.decks where id = deck_id and user_id = auth.uid())
     );
   end if;
-  if not exists (select 1 from pg_policies where policyname = 'Public anchors are viewable by everyone') then
+  if not exists (select 1 from pg_policies where tablename = 'anchors' and policyname = 'Public anchors are viewable by everyone') then
     create policy "Public anchors are viewable by everyone" on public.anchors for select using (
       exists (select 1 from public.decks where id = deck_id and is_public = true)
     );
   end if;
 
-  if not exists (select 1 from pg_policies where policyname = 'Users can manage progress') then
+  if not exists (select 1 from pg_policies where tablename = 'anchor_progress' and policyname = 'Users can manage progress') then
     create policy "Users can manage progress" on public.anchor_progress for all using (auth.uid() = user_id);
   end if;
 
-  if not exists (select 1 from pg_policies where policyname = 'Users can manage their own logs') then
+  if not exists (select 1 from pg_policies where tablename = 'review_logs' and policyname = 'Users can manage their own logs') then
     create policy "Users can manage their own logs" on public.review_logs for all using (auth.uid() = user_id);
   end if;
 
-  if not exists (select 1 from pg_policies where policyname = 'Users can manage sessions') then
+  if not exists (select 1 from pg_policies where tablename = 'sessions' and policyname = 'Users can manage sessions') then
     create policy "Users can manage sessions" on public.sessions for all using (auth.uid() = user_id);
   end if;
 end

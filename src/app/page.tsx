@@ -19,7 +19,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [dbError, setDbError] = useState<string | null>(null);
   const [showNewDeckModal, setShowNewDeckModal] = useState(false);
-  const [newDeck, setNewDeck] = useState({ name: '', description: '' });
+  const [newDeck, setNewDeck] = useState({ name: '', description: '', category: 'General', is_public: false });
   const [newAnchor, setNewAnchor] = useState({ word: '', hint: '', level: 'basic', keywords: '', reference_answer: '' });
   const [selectedDeckId, setSelectedDeckId] = useState<string>('');
   
@@ -48,15 +48,29 @@ export default function Home() {
     setDbError(null);
     try {
       // 1. Profile
+      console.log("Fetching profile for user:", user.id);
       let { data: profileData, error: pErr } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       
-      if (pErr && pErr.code === 'PGRST116') {
-        const { data: newProfile, error: createErr } = await supabase.from('profiles').insert({
-          id: user.id,
-          email: user.email,
-          name: user.user_metadata?.name || user.email?.split('@')[0] || 'Explorer'
-        }).select().single();
-        if (!createErr) profileData = newProfile;
+      if (pErr) {
+        console.warn("Profile fetch error:", pErr);
+        if (pErr.code === 'PGRST116' || pErr.message.includes('multiple rows') || pErr.message.includes('not found')) {
+          console.log("Profile not found, attempting to create...");
+          const { data: newProfile, error: createErr } = await supabase.from('profiles').insert({
+            id: user.id,
+            email: user.email,
+            name: user.user_metadata?.name || user.email?.split('@')[0] || 'Explorer'
+          }).select().single();
+          
+          if (createErr) {
+            console.error("Profile creation failed:", createErr);
+            setDbError(`Profile initialization failed: ${createErr.message}`);
+          } else {
+            console.log("Profile created successfully");
+            profileData = newProfile;
+          }
+        } else {
+          setDbError(`Database error: ${pErr.message}`);
+        }
       }
 
       if (profileData) {
@@ -64,12 +78,16 @@ export default function Home() {
       }
 
       // 2. Decks
+      console.log("Fetching decks...");
       const { data: decksData, error: dErr } = await supabase
         .from('decks')
         .select('*, anchors(id)')
         .eq('user_id', user.id);
       
-      if (!dErr) {
+      if (dErr) {
+        console.error("Decks fetch error:", dErr);
+      } else {
+        console.log("Decks fetched:", decksData?.length || 0);
         setDecks(decksData?.map(d => ({ ...d, anchorCount: d.anchors?.length || 0 })) || []);
       }
 
@@ -117,12 +135,16 @@ export default function Home() {
       user_id: user.id,
       name: newDeck.name,
       description: newDeck.description,
-      category: (newDeck as any).category || 'General',
-      is_public: (newDeck as any).is_public || false
+      category: newDeck.category,
+      is_public: newDeck.is_public
     });
-    if (!error) {
+    
+    if (error) {
+      console.error("Error creating deck:", error);
+      alert(`Synthesis Failed: ${error.message}`);
+    } else {
       setShowNewDeckModal(false);
-      setNewDeck({ name: '', description: '' });
+      setNewDeck({ name: '', description: '', category: 'General', is_public: false });
       fetchData();
     }
   };
