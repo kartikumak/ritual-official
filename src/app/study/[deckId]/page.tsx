@@ -104,7 +104,7 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
     const current = anchors[index];
     
     try {
-      const resp = await fetch('/api/recall/evaluate', {
+      const resp = await fetch('/api/evaluate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -215,75 +215,80 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
           {phase === 'input' ? (
             <motion.div key="input" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex-1 flex flex-col">
               {/* Anchor Card */}
-              <div className="relative p-7 md:p-10 rounded-[2rem] bg-card border border-border shadow-xl mb-6 overflow-hidden group transition-all">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:bg-primary/10 transition-colors" />
+              <div className="relative p-7 md:p-10 rounded-[2.5rem] bg-card border border-white/60 shadow-neumorphic mb-6 overflow-hidden group transition-all">
+                <div className="absolute top-0 right-0 w-48 h-48 bg-primary/10 rounded-full blur-[40px] -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/20 transition-colors duration-700 animate-blob" />
                 <div className="relative">
                   <div className="flex items-center gap-2 mb-4">
                     <span className="text-[10px] uppercase font-bold tracking-[0.15em] text-muted-foreground">{currentAnchor.level}</span>
                     <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
-                    <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-wide">
+                    <span className="px-3 py-1 rounded-full bg-primary/5 border border-primary/10 shadow-sm text-primary text-[9px] font-bold uppercase tracking-wide">
                        Depth: {progress.concept_depth || 0}
                     </span>
                   </div>
-                  <h2 className="text-4xl font-serif font-bold mb-3 text-foreground tracking-tight">{currentAnchor.word}</h2>
+                  <h2 className="text-4xl md:text-5xl font-serif font-bold mb-4 text-foreground tracking-tight leading-tight">{currentAnchor.word}</h2>
                   {currentAnchor.hint && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Quote size={12} className="rotate-180 opacity-50" />
-                      <p className="text-xs italic">{currentAnchor.hint}</p>
+                    <div className="flex items-center gap-3 text-muted-foreground/80 bg-muted/20 p-4 rounded-2xl border border-border/50">
+                      <Quote size={14} className="rotate-180 opacity-40 shrink-0 text-primary" />
+                      <p className="text-sm italic font-medium leading-relaxed">{currentAnchor.hint}</p>
                     </div>
                   )}
                 </div>
 
                 {/* Cognitive Assistance (Memory Fade) */}
                 {lastReview && (
-                  <div className="mt-4 pt-4 border-t border-border/40">
+                  <div className="mt-6 pt-6 border-t border-border/40">
                     <button 
                       onClick={() => setShowHistory(!showHistory)}
-                      className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 hover:text-primary transition-colors"
+                      className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 hover:text-primary transition-colors mb-4"
                     >
                       <History size={12} />
-                      Previous Perception
+                      {showHistory ? "Hide Previous Context" : "Expose Previous Context"}
                     </button>
-                    <motion.div 
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      className={cn(
-                        "mt-2 text-xs leading-relaxed italic border-l-2 border-primary/20 pl-4 py-1",
-                        MemoryFadeEngine.getFadeClass(progress.repetitions || 0)
+                    <AnimatePresence>
+                      {showHistory && (
+                        <motion.div 
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className={cn(
+                            "text-sm leading-relaxed italic border-l-[3px] border-primary/20 pl-5 py-2 overflow-hidden",
+                            MemoryFadeEngine.getFadeClass(progress.repetitions || 0)
+                          )}
+                        >
+                          "{lastReview.response_text}"
+                        </motion.div>
                       )}
-                    >
-                      {lastReview.response_text}
-                    </motion.div>
+                    </AnimatePresence>
                   </div>
                 )}
               </div>
 
               {/* Input Area */}
               <div className="flex-1 flex flex-col gap-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between ml-1">
                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Perform Retrieval</span>
                   <div className="flex gap-2">
                     <button 
                       onClick={() => setShowDrawingPad(true)}
                       className={cn(
-                        "p-2 rounded-lg border transition-all relative",
-                        currentDrawing ? "bg-emerald-50 border-emerald-200 text-emerald-600" : "bg-card border-border text-muted-foreground hover:text-primary"
+                        "p-2.5 rounded-[1rem] transition-all relative shadow-sm border",
+                        currentDrawing ? "bg-emerald-50 border-emerald-200 text-emerald-600 shadow-emerald-100" : "bg-white border-white/60 text-muted-foreground hover:text-primary hover:shadow-neumorphic"
                       )} 
-                      title="Add Drawing"
+                      title="Add Concept Drawing"
                     >
-                      <ImageIcon size={14} />
-                      {currentDrawing && <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full border border-white" />}
+                      <ImageIcon size={16} />
+                      {currentDrawing && <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white" />}
                     </button>
                     <button 
                       onClick={() => setShowVoiceRecorder(true)}
                       className={cn(
-                        "p-2 rounded-lg border transition-all relative",
-                        currentAudio ? "bg-emerald-50 border-emerald-200 text-emerald-600" : "bg-card border-border text-muted-foreground hover:text-primary"
+                        "p-2.5 rounded-[1rem] transition-all relative shadow-sm border",
+                        currentAudio ? "bg-emerald-50 border-emerald-200 text-emerald-600 shadow-emerald-100" : "bg-white border-white/60 text-muted-foreground hover:text-primary hover:shadow-neumorphic"
                       )} 
-                      title="Record Audio"
+                      title="Dictate Thought"
                     >
-                      <Mic size={14} />
-                      {currentAudio && <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full border border-white" />}
+                      <Mic size={16} />
+                      {currentAudio && <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white" />}
                     </button>
                   </div>
                 </div>
@@ -292,7 +297,7 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
                   value={recallText}
                   onChange={(e) => setRecallText(e.target.value)}
                   placeholder="Articulate everything you associate with this concept. Use your own words to strengthen the neural pathway."
-                  className="flex-1 w-full p-6 rounded-2xl bg-card border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-none text-sm leading-relaxed"
+                  className="flex-1 w-full p-6 lg:p-8 rounded-[2.5rem] bg-white border border-white/60 shadow-neumorphic-inset focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none text-sm md:text-base leading-relaxed text-foreground placeholder:text-muted-foreground/50"
                   autoFocus
                 />
 
@@ -343,43 +348,43 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
             <motion.div key="result" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-6 pb-20 overflow-y-auto max-h-[70vh]">
               {/* Scoring Card */}
               <div className={cn(
-                "p-7 rounded-[2.5rem] border shadow-xl relative overflow-hidden",
-                result.evalResult.level === 'strong' ? "bg-emerald-50 border-emerald-100" : 
-                result.evalResult.level === 'medium' ? "bg-amber-50 border-amber-100" : "bg-rose-50 border-rose-100"
+                "p-7 md:p-10 rounded-[2.5rem] border shadow-neumorphic relative overflow-hidden",
+                result.evalResult.level === 'strong' ? "bg-emerald-50/50 border-emerald-100" : 
+                result.evalResult.level === 'medium' ? "bg-amber-50/50 border-amber-100" : "bg-rose-50/50 border-rose-100"
               )}>
-                <div className="flex items-center gap-5 mb-5">
-                  <span className="text-5xl drop-shadow-sm">{result.evalResult.emoji}</span>
+                <div className="flex items-center gap-6 mb-6">
+                  <span className="text-6xl drop-shadow-md animate-breathe inline-block">{result.evalResult.emoji}</span>
                   <div>
-                    <h2 className="text-2xl font-bold tracking-tight">{result.evalResult.label}</h2>
-                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{result.evalResult.sublabel}</p>
+                    <h2 className="text-3xl font-bold tracking-tight mb-1">{result.evalResult.label}</h2>
+                    <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">{result.evalResult.sublabel}</p>
                   </div>
                 </div>
-                <div className="p-4 bg-white/50 backdrop-blur-sm rounded-2xl border border-black/5">
-                   <pre className="text-xs font-sans text-muted-foreground leading-relaxed whitespace-pre-wrap font-medium">
+                <div className="p-5 bg-white/60 backdrop-blur-md rounded-2xl border border-white/80 shadow-sm">
+                   <pre className="text-sm font-sans text-muted-foreground leading-relaxed whitespace-pre-wrap font-medium">
                       {result.evalResult.correction}
                    </pre>
                 </div>
 
                 {/* Evolution Tracking */}
                 {lastReview && (
-                  <div className="mt-4 pt-4 border-t border-black/5">
-                    <div className="flex items-center justify-between mb-2">
+                  <div className="mt-8 pt-6 border-t border-black/5">
+                    <div className="flex items-center justify-between mb-4">
                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Conceptual Evolution</h4>
                        <span className={cn(
-                         "text-[9px] font-bold px-2 py-0.5 rounded-full",
-                         result.evalResult.score > lastReview.score ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"
+                         "text-[9px] font-bold px-3 py-1 rounded-full shadow-sm",
+                         result.evalResult.score > lastReview.score ? "bg-emerald-100/50 text-emerald-700 border border-emerald-200/50" : "bg-muted/50 text-muted-foreground border border-border"
                        )}>
                          {result.evalResult.score > lastReview.score ? `+${result.evalResult.score - lastReview.score}% Depth` : 'Stable'}
                        </span>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <p className="text-[8px] font-bold text-muted-foreground/40 uppercase">Previous</p>
-                        <p className="text-[10px] line-clamp-2 opacity-50 italic">{lastReview.response_text}</p>
+                    <div className="grid grid-cols-2 gap-6 bg-white/40 p-5 rounded-2xl border border-white/60">
+                      <div className="space-y-2">
+                        <p className="text-[9px] font-bold text-muted-foreground/50 uppercase tracking-wider">Previous Memory</p>
+                        <p className="text-xs leading-relaxed opacity-60 italic">{lastReview.response_text}</p>
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-[8px] font-bold text-muted-foreground/40 uppercase">Current</p>
-                        <p className="text-[10px] line-clamp-2 font-medium">{recallText}</p>
+                      <div className="space-y-2">
+                        <p className="text-[9px] font-bold text-muted-foreground/50 uppercase tracking-wider">Current Memory</p>
+                        <p className="text-xs leading-relaxed font-medium">{recallText}</p>
                       </div>
                     </div>
                   </div>
@@ -387,52 +392,52 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
               </div>
 
               {/* SRS Meta */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="p-4 bg-white border border-border rounded-2xl shadow-sm text-center">
-                  <p className="text-[9px] text-muted-foreground font-bold uppercase mb-1">Depth</p>
-                  <p className="text-xs font-bold text-primary">{result.depthLabel}</p>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="p-5 bg-white/60 backdrop-blur-sm border border-white/80 rounded-[2rem] shadow-neumorphic text-center">
+                  <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-2">Depth</p>
+                  <p className="text-sm font-bold text-primary">{result.depthLabel}</p>
                 </div>
-                <div className="p-4 bg-white border border-border rounded-2xl shadow-sm text-center">
-                  <p className="text-[9px] text-muted-foreground font-bold uppercase mb-1">Interval</p>
-                  <p className="text-xs font-bold">+{result.newSRS.interval_days}d</p>
+                <div className="p-5 bg-white/60 backdrop-blur-sm border border-white/80 rounded-[2rem] shadow-neumorphic text-center">
+                  <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-2">Interval</p>
+                  <p className="text-sm font-bold">+{result.newSRS.interval_days}d</p>
                 </div>
-                <div className="p-4 bg-white border border-border rounded-2xl shadow-sm text-center">
-                  <p className="text-[9px] text-muted-foreground font-bold uppercase mb-1">Due</p>
-                  <p className="text-xs font-bold">{result.nextDue}</p>
+                <div className="p-5 bg-white/60 backdrop-blur-sm border border-white/80 rounded-[2rem] shadow-neumorphic text-center">
+                  <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-2">Due</p>
+                  <p className="text-sm font-bold truncate px-1">{new Date(result.nextDue || result.newSRS.due_at).toLocaleDateString()}</p>
                 </div>
               </div>
 
               {/* Retrieval Feedback */}
-              <div className="p-6 bg-white border border-border rounded-2xl shadow-sm">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4">Retrieval Analysis</h3>
+              <div className="p-7 md:p-8 bg-card border border-white/60 rounded-[2rem] shadow-neumorphic">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-5">Retrieval Analysis</h3>
                 <div 
                   dangerouslySetInnerHTML={{ __html: result.evalResult.highlightedHtml }} 
-                  className="text-sm leading-relaxed text-foreground mb-6"
+                  className="text-base leading-relaxed text-foreground mb-8 bg-white/50 p-6 rounded-2xl border border-white/80 shadow-sm"
                 />
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2.5">
                   {result.evalResult.hitKeywords.map((kw: string) => (
-                    <span key={kw} className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-bold border border-emerald-100">✓ {kw}</span>
+                    <span key={kw} className="px-3.5 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-bold border border-emerald-200/50 shadow-sm">✓ {kw}</span>
                   ))}
                   {result.evalResult.missKeywords.map((kw: string) => (
-                    <span key={kw} className="px-3 py-1 bg-rose-50 text-rose-500 rounded-full text-[10px] font-bold border border-rose-100">✗ {kw}</span>
+                    <span key={kw} className="px-3.5 py-1.5 bg-rose-50 text-rose-600 rounded-full text-xs font-bold border border-rose-200/50 shadow-sm">✗ {kw}</span>
                   ))}
                 </div>
               </div>
 
               {/* Reference */}
-              <div className="p-6 bg-primary/5 border border-primary/10 rounded-3xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-3 opacity-10"><BookOpen size={48} /></div>
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-primary mb-3">Ground Truth</h3>
-                <p className="text-sm leading-relaxed text-primary/80 font-medium italic">
+              <div className="p-8 bg-primary/5 border border-primary/10 rounded-[2rem] shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-[0.03] scale-150 transform translate-x-4 -translate-y-4"><BookOpen size={120} /></div>
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-primary mb-4 relative z-10">Ground Truth Reference</h3>
+                <p className="text-base leading-relaxed text-primary/80 font-medium italic relative z-10">
                   "{currentAnchor.reference_answer}"
                 </p>
               </div>
 
               {/* Navigation */}
-              <div className="flex gap-4 pt-4">
+              <div className="flex gap-4 pt-6">
                 <button 
                   onClick={() => setPhase('input')}
-                  className="flex items-center justify-center gap-2 px-8 h-14 rounded-2xl bg-muted/10 hover:bg-muted/20 transition-colors font-bold text-sm"
+                  className="flex items-center justify-center gap-2 px-8 h-14 rounded-2xl bg-white border border-white/60 shadow-neumorphic hover:text-primary transition-colors font-bold text-sm"
                 >
                   <RotateCcw size={18} />
                   Redo

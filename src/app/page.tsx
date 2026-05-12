@@ -21,7 +21,9 @@ export default function Home() {
   const [newDeck, setNewDeck] = useState({ name: '', description: '' });
   const [newAnchor, setNewAnchor] = useState({ word: '', hint: '', level: 'basic', keywords: '', reference_answer: '' });
   const [selectedDeckId, setSelectedDeckId] = useState<string>('');
-  
+  const [editProfileMode, setEditProfileMode] = useState(false);
+  const [editedName, setEditedName] = useState('');
+
   const supabase = getSupabase();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -44,7 +46,10 @@ export default function Home() {
     try {
       // 1. Profile
       const { data: profile, error: pErr } = await supabase.from('profiles').select('*').eq('id', user?.id).single();
-      if (!pErr) setProfile(profile);
+      if (!pErr) {
+        setProfile(profile);
+        setEditedName(profile.name || '');
+      }
 
       // 2. Decks with anchor counts
       const { data: decksData, error: dErr } = await supabase
@@ -194,6 +199,18 @@ export default function Home() {
     reader.readAsText(file);
   };
 
+  const handleUpdateProfile = async () => {
+    if (!editedName) return;
+    const { error } = await supabase.from('profiles').update({ name: editedName }).eq('id', user?.id as string);
+    if (!error) {
+      setProfile({ ...profile, name: editedName });
+      setEditProfileMode(false);
+      alert('Profile updated successfully!');
+    } else {
+      alert("Error: " + error.message);
+    }
+  };
+
   if (authLoading || (user && loading)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
@@ -231,14 +248,15 @@ export default function Home() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {decks.length === 0 ? (
-                <div className="p-12 text-center border-2 border-dashed border-border rounded-3xl md:col-span-2">
-                  <div className="w-12 h-12 bg-muted/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <BookOpen size={24} className="text-muted-foreground" />
+                <div className="p-12 text-center border-2 border-dashed border-primary/20 rounded-[2.5rem] md:col-span-2 bg-white/50 shadow-neumorphic relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                  <div className="w-16 h-16 bg-white shadow-neumorphic rounded-full flex items-center justify-center mx-auto mb-6 relative z-10">
+                    <BookOpen size={24} className="text-primary/70" />
                   </div>
-                  <h3 className="text-sm font-bold mb-1">Begin your Rituals</h3>
-                  <p className="text-xs text-muted-foreground mb-4">Create your first deck to start anchoring.</p>
-                  <button onClick={() => setShowNewDeckModal(true)} className="bg-primary text-white px-6 py-2 rounded-full text-xs font-bold">
-                    Create Deck
+                  <h3 className="text-lg font-serif font-bold mb-2 relative z-10 text-foreground">Begin your Rituals</h3>
+                  <p className="text-sm text-muted-foreground mb-6 font-medium relative z-10">Create your first collection to start anchoring.</p>
+                  <button onClick={() => setShowNewDeckModal(true)} className="bg-primary text-white px-8 py-3 rounded-full text-sm font-bold shadow-lg active:scale-95 transition-transform relative z-10">
+                    Initialize
                   </button>
                 </div>
               ) : (
@@ -248,35 +266,35 @@ export default function Home() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05 }}
-                    className="p-5 rounded-2xl border border-border bg-card shadow-sm group relative"
+                    className="p-5 rounded-[2rem] border border-white/40 bg-card shadow-neumorphic group relative overflow-hidden transition-all hover:bg-card/90"
                   >
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex-1">
-                        <h3 className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1 pr-4">
+                        <h3 className="text-lg font-serif font-bold text-foreground group-hover:text-primary transition-colors">
                           {deck.name}
                         </h3>
-                        <p className="text-xs mt-1 text-muted-foreground line-clamp-2">
-                          {deck.description || "No description provided."}
+                        <p className="text-xs mt-1.5 text-muted-foreground/80 line-clamp-2 leading-relaxed font-medium">
+                          {deck.description || "No specific goal defined. Expand your knowledge structure."}
                         </p>
                       </div>
-                      <div className="flex items-center gap-1">
-                         <button onClick={() => handleExportDeck(deck)} className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground" title="Export">
+                      <div className="flex flex-col items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                         <button onClick={() => handleExportDeck(deck)} className="p-2 rounded-xl bg-white shadow-md text-emerald-600 hover:scale-110 transition-transform" title="Export JSON">
                             <Download size={14} />
                          </button>
-                         <button onClick={() => handleDeleteDeck(deck.id)} className="p-2 rounded-lg hover:bg-rose-50 text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity" title="Delete">
+                         <button onClick={() => handleDeleteDeck(deck.id)} className="p-2 rounded-xl bg-white shadow-md text-rose-500 hover:scale-110 transition-transform" title="Delete Collection">
                             <Trash2 size={14} />
                          </button>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="px-3 py-1 rounded-full text-[10px] font-bold bg-primary/10 text-primary flex items-center gap-1.5">
+                    <div className="flex items-center justify-between mt-auto">
+                      <div className="px-3 py-1.5 rounded-full text-[10px] font-bold bg-primary/5 border border-primary/10 text-primary flex items-center gap-1.5 shadow-sm">
                         <LayoutGrid size={10} />
                         {(deck.anchors?.[0]?.count || 0)} anchors
                       </div>
                       {(deck.anchors?.[0]?.count || 0) > 0 ? (
                         <Link href={`/study/${deck.id}`}>
-                          <button className="px-5 py-2 rounded-full text-xs font-bold bg-primary text-white shadow-md active:scale-95 transition-transform">
-                            Study
+                          <button className="px-6 py-2.5 rounded-full text-xs font-bold bg-primary text-white shadow-lg active:scale-95 hover:bg-primary-light transition-all flex items-center gap-2">
+                            Dive In
                           </button>
                         </Link>
                       ) : (
@@ -285,7 +303,7 @@ export default function Home() {
                             setSelectedDeckId(deck.id);
                             setActiveTab('create');
                           }}
-                          className="px-5 py-2 rounded-full text-xs font-bold bg-muted/20 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                          className="px-6 py-2.5 rounded-full text-xs font-bold border border-border bg-white text-muted-foreground shadow-sm active:scale-95 hover:text-primary hover:border-primary/30 transition-all"
                         >
                           Add Anchor
                         </button>
@@ -321,10 +339,23 @@ export default function Home() {
                         <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-lg">
                            {getInitials(profile?.name || user?.email || "?")}
                         </div>
-                        <div>
-                           <p className="text-sm font-bold">{profile?.name || "Member"}</p>
+                        <div className="flex-1">
+                           {editProfileMode ? (
+                             <input 
+                               value={editedName} 
+                               onChange={e => setEditedName(e.target.value)}
+                               className="w-full text-sm font-bold bg-muted/5 border border-border rounded-lg px-2 py-1 focus:border-primary outline-none"
+                             />
+                           ) : (
+                             <p className="text-sm font-bold">{profile?.name || "Member"}</p>
+                           )}
                            <p className="text-xs text-muted-foreground">{user?.email}</p>
                         </div>
+                        {editProfileMode ? (
+                          <button onClick={handleUpdateProfile} className="text-xs font-bold text-primary hover:underline">Save</button>
+                        ) : (
+                          <button onClick={() => setEditProfileMode(true)} className="text-xs font-bold text-primary hover:underline">Edit</button>
+                        )}
                       </div>
                       <button 
                         onClick={signOut}
@@ -371,24 +402,29 @@ export default function Home() {
         )}
 
         {activeTab === "decks" && (
-          <div className="space-y-8 mb-8">
-            <div className="grid grid-cols-2 gap-4">
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-4 rounded-2xl bg-card border border-border shadow-sm">
-                <p className="text-[11px] text-muted-foreground font-bold mb-1">Total Recall</p>
-                <p className="text-3xl font-bold text-primary">{stats.total}</p>
+          <div className="space-y-8 mb-8 relative">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-[100px] animate-blob" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-400/10 rounded-full blur-[80px] animate-blob" style={{ animationDelay: '2s' }} />
+            
+            <div className="grid grid-cols-2 gap-4 relative z-10">
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-5 rounded-[2rem] bg-card border border-white/60 shadow-neumorphic">
+                <p className="text-[11px] text-muted-foreground font-bold mb-1 uppercase tracking-widest">Total Recall</p>
+                <p className="text-4xl font-serif font-bold text-primary animate-breathe">{stats.total}</p>
                 <p className="text-[10px] text-muted-foreground mt-1">successful anchors</p>
               </motion.div>
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="p-4 rounded-2xl bg-card border border-border shadow-sm">
-                <p className="text-[11px] text-muted-foreground font-bold mb-1">This Week</p>
-                <p className="text-3xl font-bold">{stats.weekly}</p>
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="p-5 rounded-[2rem] bg-card border border-white/60 shadow-neumorphic">
+                <p className="text-[11px] text-muted-foreground font-bold mb-1 uppercase tracking-widest">This Week</p>
+                <p className="text-4xl font-serif font-bold animate-breathe">{stats.weekly}</p>
                 <p className="text-[10px] text-muted-foreground mt-1">active reviews</p>
               </motion.div>
             </div>
 
-            <section>
-              <div className="p-5 rounded-3xl bg-primary text-white shadow-xl relative overflow-hidden flex items-center gap-5">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
-                <div className="relative w-16 h-16 shrink-0">
+            <section className="relative z-10">
+              <div className="p-6 rounded-[2.5rem] bg-primary text-white shadow-lg relative overflow-hidden flex items-center gap-6">
+                <div className="absolute top-0 right-0 w-48 h-48 bg-white/20 rounded-full blur-[40px] -translate-y-1/2 translate-x-1/2 animate-blob" />
+                <div className="absolute bottom-0 left-1/4 w-32 h-32 bg-primary-light/30 rounded-full blur-[30px] translate-y-1/2 animate-blob" style={{ animationDelay: '3s' }} />
+                
+                <div className="relative w-20 h-20 shrink-0">
                   <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
                     <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="8" className="text-white/20" />
                     <motion.circle 
@@ -402,12 +438,12 @@ export default function Home() {
                     />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[13px] font-bold">{Math.round((stats.weekly / (profile?.weekly_goal || 140)) * 100)}%</span>
+                    <span className="text-sm font-bold">{Math.round((stats.weekly / (profile?.weekly_goal || 140)) * 100)}%</span>
                   </div>
                 </div>
                 <div className="relative">
-                  <h3 className="text-sm font-bold mb-1">Weekly Target</h3>
-                  <p className="text-[11px] text-white/70">{stats.weekly} of {profile?.weekly_goal || 140} anchors anchored</p>
+                  <h3 className="text-base font-bold mb-1 tracking-tight">Weekly Target</h3>
+                  <p className="text-xs text-white/80 font-medium">{stats.weekly} of {profile?.weekly_goal || 140} anchors anchored</p>
                 </div>
               </div>
             </section>
@@ -437,36 +473,37 @@ export default function Home() {
 
       {/* Modal: New Deck */}
       {showNewDeckModal && (
-        <div className="fixed inset-0 z-[110] bg-black/40 backdrop-blur-sm flex items-end justify-center p-4">
-          <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} className="w-full max-w-md bg-card rounded-[2.5rem] p-8 shadow-2xl border border-border">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold font-serif">New Collection</h2>
-              <button onClick={() => setShowNewDeckModal(false)} className="w-8 h-8 rounded-full bg-muted/20 flex items-center justify-center">✕</button>
+        <div className="fixed inset-0 z-[110] bg-black/40 backdrop-blur-sm flex items-end md:items-center justify-center p-4">
+          <motion.div initial={{ y: "100%", opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="w-full max-w-md bg-white rounded-[2.5rem] p-8 md:p-10 shadow-neumorphic border border-white/60 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-[40px] -translate-y-1/2 translate-x-1/2 animate-blob" />
+            <div className="flex justify-between items-center mb-8 relative z-10">
+              <h2 className="text-2xl font-bold font-serif tracking-tight">New Collection</h2>
+              <button onClick={() => setShowNewDeckModal(false)} className="w-10 h-10 rounded-full bg-muted/20 flex items-center justify-center font-bold text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors">✕</button>
             </div>
-            <div className="space-y-5 mb-8">
+            <div className="space-y-6 mb-10 relative z-10">
               <div>
-                <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1 mb-1.5 block">Collection Name</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-2 mb-2 block">Collection Name</label>
                 <input 
                   value={newDeck.name}
                   onChange={(e) => setNewDeck({...newDeck, name: e.target.value})}
-                  className="w-full h-14 bg-muted/5 border border-border rounded-xl px-5 text-sm focus:border-primary outline-none transition-all" 
-                  placeholder="e.g. Behavioral Economics" 
+                  className="w-full h-14 bg-white border border-white/60 shadow-neumorphic-inset rounded-2xl px-5 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-muted-foreground/40" 
+                  placeholder="e.g. Cognitive Biases" 
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1 mb-1.5 block">Goal / Purpose</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-2 mb-2 block">Knowledge Domain</label>
                 <textarea 
                   value={newDeck.description}
                   onChange={(e) => setNewDeck({...newDeck, description: e.target.value})}
-                  className="w-full h-28 bg-muted/5 border border-border rounded-xl p-5 text-sm focus:border-primary outline-none resize-none transition-all leading-relaxed" 
-                  placeholder="What knowledge will be anchored here?" 
+                  className="w-full h-28 bg-white border border-white/60 shadow-neumorphic-inset rounded-2xl p-5 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none resize-none transition-all leading-relaxed placeholder:text-muted-foreground/40" 
+                  placeholder="What will you master here?" 
                 />
               </div>
             </div>
             <button 
               onClick={handleCreateDeck}
               disabled={!newDeck.name}
-              className="w-full h-14 bg-primary text-white font-bold rounded-2xl shadow-lg ring-offset-2 active:scale-95 transition-all disabled:opacity-50"
+              className="w-full h-14 bg-primary text-white font-bold rounded-2xl shadow-lg ring-offset-2 active:scale-95 transition-all disabled:opacity-50 relative z-10 text-sm"
             >
               Initialize Collection
             </button>
@@ -476,52 +513,53 @@ export default function Home() {
 
       {/* Modal: New Anchor */}
       {activeTab === 'create' && (
-        <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-end justify-center p-4">
+        <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-end md:items-center justify-center p-4">
           <motion.div 
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            className="w-full max-w-md bg-card rounded-[2.5rem] p-8 shadow-2xl border border-border overflow-y-auto max-h-[90vh]"
+            initial={{ y: "100%", opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="w-full max-w-md bg-white rounded-[2.5rem] p-8 md:p-10 shadow-neumorphic border border-white/60 relative overflow-hidden overflow-y-auto max-h-[90vh]"
           >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold font-serif">Deep Anchor</h2>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-[40px] -translate-y-1/2 translate-x-1/2 animate-blob" />
+            <div className="flex justify-between items-center mb-8 relative z-10">
+              <h2 className="text-2xl font-bold font-serif tracking-tight">Deep Anchor</h2>
               <button 
                 onClick={() => setActiveTab('decks')}
-                className="w-8 h-8 rounded-full bg-muted/10 flex items-center justify-center font-bold"
+                className="w-10 h-10 rounded-full bg-muted/20 flex items-center justify-center font-bold text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors"
               >
                 ✕
               </button>
             </div>
 
-            <div className="space-y-4 mb-8">
+            <div className="space-y-6 mb-10 relative z-10">
               <div>
-                <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1 mb-1 block">Target Collection</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-2 mb-2 block">Target Collection</label>
                 <select 
                   value={selectedDeckId}
                   onChange={(e) => setSelectedDeckId(e.target.value)}
-                  className="w-full h-12 bg-muted/5 border border-border rounded-xl px-4 text-sm focus:border-primary outline-none appearance-none"
+                  className="w-full h-14 bg-white border border-white/60 shadow-neumorphic-inset rounded-2xl px-5 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none appearance-none"
                 >
-                  <option value="">Select a deck...</option>
+                  <option value="" disabled>Select a deck...</option>
                   {decks.map(d => (
                     <option key={d.id} value={d.id}>{d.name}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1 mb-1 block">Anchor Concept</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-2 mb-2 block">Anchor Concept</label>
                 <input 
                   value={newAnchor.word}
                   onChange={(e) => setNewAnchor({...newAnchor, word: e.target.value})}
-                  className="w-full h-12 bg-muted/5 border border-border rounded-xl px-4 text-sm focus:border-primary outline-none" 
-                  placeholder="e.g. Behavioral Sunk Cost" 
+                  className="w-full h-14 bg-white border border-white/60 shadow-neumorphic-inset rounded-2xl px-5 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none placeholder:text-muted-foreground/40" 
+                  placeholder="e.g. Sunk Cost Fallacy" 
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                  <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1 mb-1 block">Level</label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-2 mb-2 block">Level</label>
                     <select 
                       value={newAnchor.level}
                       onChange={(e) => setNewAnchor({...newAnchor, level: e.target.value})}
-                      className="w-full h-12 bg-muted/5 border border-border rounded-xl px-3 text-sm focus:border-primary outline-none appearance-none"
+                      className="w-full h-14 bg-white border border-white/60 shadow-neumorphic-inset rounded-2xl px-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none appearance-none"
                     >
                       <option value="basic">Basic</option>
                       <option value="intermediate">Intermediate</option>
@@ -529,38 +567,38 @@ export default function Home() {
                     </select>
                  </div>
                  <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1 mb-1 block">Category Hint</label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-2 mb-2 block">Subtle Hint</label>
                     <input 
                       value={newAnchor.hint}
                       onChange={(e) => setNewAnchor({...newAnchor, hint: e.target.value})}
-                      className="w-full h-12 bg-muted/5 border border-border rounded-xl px-4 text-sm focus:border-primary outline-none" 
+                      className="w-full h-14 bg-white border border-white/60 shadow-neumorphic-inset rounded-2xl px-4 text-sm italic font-medium focus:ring-2 focus:ring-primary/20 outline-none placeholder:text-muted-foreground/40" 
                       placeholder="Context..." 
                     />
                  </div>
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1 mb-1 block">Keywords (comma-separated)</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-2 mb-2 block">Keywords (comma-separated)</label>
                 <input 
                   value={newAnchor.keywords}
                   onChange={(e) => setNewAnchor({...newAnchor, keywords: e.target.value})}
-                  className="w-full h-12 bg-muted/5 border border-border rounded-xl px-4 text-sm focus:border-primary outline-none" 
-                  placeholder="investment, bias, loss, psychology" 
+                  className="w-full h-14 bg-white border border-white/60 shadow-neumorphic-inset rounded-2xl px-5 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none placeholder:text-muted-foreground/40" 
+                  placeholder="investment, bias, loss" 
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1 mb-1 block">Reference Truth</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-2 mb-2 block">Reference Truth</label>
                 <textarea 
                   value={newAnchor.reference_answer}
                   onChange={(e) => setNewAnchor({...newAnchor, reference_answer: e.target.value})}
-                  className="w-full h-24 bg-muted/5 border border-border rounded-xl p-4 text-sm focus:border-primary outline-none resize-none leading-relaxed" 
-                  placeholder="The ground truth explanation for recall verification..." 
+                  className="w-full h-28 bg-white border border-white/60 shadow-neumorphic-inset rounded-2xl p-5 text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none resize-none leading-relaxed placeholder:text-muted-foreground/40" 
+                  placeholder="The ground truth explanation for the AI to benchmark your recall against..." 
                 />
               </div>
             </div>
 
             <button 
               onClick={handleCreateAnchor}
-              className="w-full h-14 bg-emerald-600 text-white font-bold rounded-2xl shadow-lg ring-offset-2 active:scale-95 transition-all"
+              className="w-full h-14 bg-emerald-600 text-white font-bold rounded-2xl shadow-lg ring-offset-2 active:scale-95 transition-all text-sm relative z-10"
             >
               Anchor Concept
             </button>

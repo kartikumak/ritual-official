@@ -88,7 +88,7 @@ export const RecallEngine = {
       missKeywords: misses.slice(0, 5),
       highlightedHtml: this._highlight(userText, hits),
       correction,
-      referenceAnswer: anchor.referenceAnswer,
+      referenceAnswer: anchor.reference_answer,
       isMeaningful: true
     };
   },
@@ -128,7 +128,7 @@ export const RecallEngine = {
       hitKeywords: [], missKeywords: anchor.keywords.slice(0, 3),
       highlightedHtml: "No text written",
       correction: "✦ Write anything — even a rough idea counts as an attempt.",
-      referenceAnswer: anchor.referenceAnswer, isMeaningful: false
+      referenceAnswer: anchor.reference_answer, isMeaningful: false
     };
   },
 
@@ -139,7 +139,7 @@ export const RecallEngine = {
       hitKeywords: hits, missKeywords: misses.slice(0, 4),
       highlightedHtml: "Response too vague",
       correction: `✦ Try to use more specific terms. Hints: ${anchor.keywords.slice(0, 3).join(", ")}.`,
-      referenceAnswer: anchor.referenceAnswer, isMeaningful: false
+      referenceAnswer: anchor.reference_answer, isMeaningful: false
     };
   },
 
