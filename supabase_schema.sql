@@ -92,11 +92,16 @@ alter table public.sessions enable row level security;
 -- Policies
 create policy "Users can view their own profile" on public.profiles for select using (auth.uid() = id);
 create policy "Users can update their own profile" on public.profiles for update using (auth.uid() = id);
+create policy "Public profiles are viewable by everyone" on public.profiles for select using (true);
 
 create policy "Users can manage their own decks" on public.decks for all using (auth.uid() = user_id);
+create policy "Public decks are viewable by everyone" on public.decks for select using (is_public = true);
 
 create policy "Users can manage anchors in their decks" on public.anchors for all using (
   exists (select 1 from public.decks where id = deck_id and user_id = auth.uid())
+);
+create policy "Public anchors are viewable by everyone" on public.anchors for select using (
+  exists (select 1 from public.decks where id = deck_id and is_public = true)
 );
 
 create policy "Users can manage progress" on public.anchor_progress for all using (auth.uid() = user_id);

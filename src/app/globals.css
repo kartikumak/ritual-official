@@ -14,43 +14,47 @@
   --color-accent: #10B981; /* Vibrant Emerald */
   --color-accent-foreground: #FFFFFF;
 
-  --color-background: #F8FAFC;
-  --color-foreground: #0F172A;
+  --color-background: #0B0E14; /* Deeper Dark Background */
+  --color-foreground: #F8FAFC;
 
-  --color-card: #FFFFFF;
-  --color-card-foreground: #1E293B;
+  --color-card: #151921; /* Dark Card Background */
+  --color-card-foreground: #E2E8F0;
 
-  --color-border: #E2E8F0;
+  --color-border: #1E293B;
   
   --radius-xl: 1.5rem;
   --radius-2xl: 2rem;
-  --radius-3xl: 3rem;
+  --radius-3xl: 3.5rem;
 
-  --shadow-neumorphic: 8px 8px 16px rgba(0, 0, 0, 0.05), -8px -8px 16px #ffffff;
-  --shadow-neumorphic-inset: inset 6px 6px 12px rgba(0, 0, 0, 0.05), inset -6px -6px 12px #ffffff;
-  --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.3);
+  --shadow-neumorphic: 10px 10px 20px rgba(0, 0, 0, 0.4), -5px -5px 15px rgba(255, 255, 255, 0.02);
+  --shadow-neumorphic-inset: inset 6px 6px 12px rgba(0, 0, 0, 0.4), inset -4px -4px 10px rgba(255, 255, 255, 0.02);
+  --shadow-glow: 0 0 30px rgba(139, 92, 246, 0.15);
 
-  --animate-blob: blob 7s infinite;
+  --animate-blob: blob 10s infinite;
   --animate-breathe: breathe 4s ease-in-out infinite;
 }
 
 @layer base {
   body {
-    @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary;
+    @apply bg-background text-foreground antialiased selection:bg-primary/30 selection:text-primary;
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-white/70 backdrop-blur-md border border-white/40 shadow-xl;
+    @apply bg-card/60 backdrop-blur-xl border border-white/5 shadow-2xl;
   }
   
   .neo-btn {
-    @apply bg-white shadow-neumorphic active:shadow-neumorphic-inset transition-all duration-200 rounded-2xl;
+    @apply bg-card shadow-neumorphic active:shadow-neumorphic-inset active:scale-95 transition-all duration-300 rounded-[2rem];
   }
   
   .neo-input {
-    @apply bg-white shadow-neumorphic-inset border-none px-6 py-4 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 transition-all;
+    @apply bg-card shadow-neumorphic-inset border-none px-6 py-5 rounded-[2rem] outline-none focus:ring-2 focus:ring-primary/40 transition-all;
+  }
+
+  .stat-card {
+    @apply p-6 rounded-[2.5rem] bg-card border border-white/5 shadow-neumorphic transition-all hover:shadow-glow;
   }
 }
 
