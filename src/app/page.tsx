@@ -165,7 +165,7 @@ export default function Home() {
           <p className="text-[10px] font-medium tracking-[0.13em] uppercase text-muted mb-1">Welcome back</p>
           <h1 className="text-[26px] font-serif font-normal text-foreground leading-tight">{profile?.name || "Max"}</h1>
         </div>
-        <Link href="/profile" className="w-[42px] h-[42px] rounded-full bg-primary-light text-primary font-semibold flex items-center justify-center text-[15px] shrink-0 hover:opacity-80 transition-opacity">
+        <Link href="/profile" className="w-[42px] h-[42px] rounded-full bg-primary-lighter text-primary font-semibold flex items-center justify-center text-[15px] shrink-0 hover:bg-primary-light transition-colors">
           {getInitials(profile?.name || user?.email || "M")}
         </Link>
       </header>
@@ -193,12 +193,12 @@ export default function Home() {
         <div className="card">
           <div className="flex items-center justify-between mb-4">
             <span className="text-[13px] font-bold text-foreground">Activity</span>
-            <div className="flex bg-secondary p-0.5 rounded-full">
+            <div className="flex bg-secondary p-1 rounded-full">
                <button 
                 onClick={() => setChartRange("Week")}
                 className={cn(
-                  "px-3 py-1 rounded-full text-[11px] font-medium transition-all",
-                  chartRange === "Week" ? "bg-primary text-white shadow-sm" : "text-muted hover:text-foreground"
+                  "px-4 py-1.5 rounded-full text-[11px] font-bold transition-all",
+                  chartRange === "Week" ? "bg-primary text-white shadow-md" : "text-muted hover:text-foreground"
                 )}
                >
                  Week
@@ -206,8 +206,8 @@ export default function Home() {
                <button 
                 onClick={() => setChartRange("Month")}
                 className={cn(
-                  "px-3 py-1 rounded-full text-[11px] font-medium transition-all",
-                  chartRange === "Month" ? "bg-primary text-white shadow-sm" : "text-muted hover:text-foreground"
+                  "px-4 py-1.5 rounded-full text-[11px] font-bold transition-all",
+                  chartRange === "Month" ? "bg-primary text-white shadow-md" : "text-muted hover:text-foreground"
                 )}
                >
                  Month
@@ -290,7 +290,7 @@ export default function Home() {
           <h2 className="text-[13px] font-bold text-foreground">My Decks</h2>
           <button 
             onClick={() => setShowNewDeckModal(true)}
-            className="text-primary bg-primary-light px-3 py-1.5 rounded-full text-[11px] font-semibold flex items-center gap-1.5 hover:opacity-80 transition-all"
+            className="btn-primary btn-sm px-4 py-1.5 rounded-full text-[11px] font-bold flex items-center gap-1.5"
           >
             <Plus size={12} />
             New deck
@@ -326,13 +326,13 @@ export default function Home() {
               </div>
               <div className="flex items-center justify-between mt-3">
                 <div className="flex items-center gap-1.5 text-[11px] text-muted font-medium uppercase tracking-tight">
-                   <div className="w-5 h-5 bg-secondary rounded flex items-center justify-center">
+                   <div className="w-5 h-5 bg-primary-lighter rounded flex items-center justify-center">
                      <BookOpen size={10} className="text-primary" />
                    </div>
                    {deck.anchorCount} anchors
                 </div>
                 <Link href={`/study/${deck.id}`}>
-                  <button className="bg-primary text-white text-[11px] font-semibold px-4 py-1.5 rounded-full shadow-[0_3px_10px_rgba(124,111,205,0.32)] hover:opacity-80 transition-opacity">
+                  <button className="btn-primary btn-sm px-5 py-1.5 font-bold">
                     Study
                   </button>
                 </Link>
@@ -347,19 +347,19 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Store Entry */}
+      {/* Marketplace Entry */}
       <Link href="/marketplace" className="block animate-in fade-in slide-in-from-bottom-2 duration-500 delay-500">
-        <div className="card bg-primary-light border-primary/10 flex items-center justify-between hover:bg-primary-light/80 transition-all">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-primary">
-              <ShoppingBag size={20} />
+        <div className="card bg-primary text-white border-transparent flex items-center justify-between hover:bg-primary-light transition-all shadow-[--shadow-glow-purple]">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white">
+              <ShoppingBag size={22} />
             </div>
             <div>
-              <p className="text-[13px] font-bold text-accent-fg">Ritual Marketplace</p>
-              <p className="text-[11px] text-muted">Aquire shared neural models</p>
+              <p className="text-[14px] font-bold">Ritual Marketplace</p>
+              <p className="text-[11px] text-white/70">Aquire shared neural models</p>
             </div>
           </div>
-          <ChevronRight size={16} className="text-primary" />
+          <ChevronRight size={18} className="text-white/60" />
         </div>
       </Link>
     </div>
@@ -442,12 +442,12 @@ export default function Home() {
       </div>
 
       {/* Guidance */}
-      <div className="card bg-primary-light border-transparent flex items-start gap-4">
+      <div className="card bg-primary-lighter border-transparent flex items-start gap-4">
         <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center shrink-0">
           <Zap size={16} className="text-primary fill-primary" />
         </div>
         <p className="text-[11px] leading-relaxed text-muted">
-          <strong className="text-accent-fg">Deep-context anchors</strong> are cognitive nodes that bind abstract concepts to specific retrieval cues. The AI Architect will use your reference truth to evaluate your neural synchronization during study rituals.
+          <strong className="text-primary">Deep-context anchors</strong> are cognitive nodes that bind abstract concepts to specific retrieval cues. The AI Architect will use your reference truth to evaluate your neural synchronization during study rituals.
         </p>
       </div>
     </div>
@@ -502,10 +502,10 @@ export default function Home() {
                 )}
               >
                 <div className={cn(
-                  "w-12 h-8 rounded-2xl flex items-center justify-center transition-all",
-                  activeTab === item.id ? "bg-primary-light" : "group-hover:bg-secondary"
+                  "w-12 h-[34px] rounded-full flex items-center justify-center transition-all",
+                  activeTab === item.id ? "bg-primary text-white shadow-lg" : "group-hover:bg-secondary"
                 )}>
-                   <item.icon size={20} strokeWidth={activeTab === item.id ? 2.5 : 1.8} />
+                   <item.icon size={19} strokeWidth={activeTab === item.id ? 2.5 : 2} />
                 </div>
                 <span className={cn("text-[10px]", activeTab === item.id ? "font-bold" : "font-medium")}>{item.label}</span>
               </button>

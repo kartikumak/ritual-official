@@ -20,6 +20,7 @@
   --color-accent-orange: #f97316;  /* Orange — alerts, destructive actions */
 
   /* Neutral Colors - Clean grayscale */
+  --color-secondary: #f3ede8;      /* Map secondary to muted-bg for compatibility */
   --color-background: #f8f7f5;     /* Off-white page background */
   --color-card: #ffffff;           /* Pure white cards */
   --color-foreground: #1f1d1a;     /* Near black text */
@@ -133,7 +134,7 @@
   }
 
   .card-elevated {
-    @apply card shadow-[--shadow-lg] hover:shadow-[--shadow-xl] transition-shadow;
+    @apply bg-card rounded-[--radius-xl] p-6 border border-border shadow-[--shadow-lg] hover:shadow-[--shadow-xl] transition-all duration-200;
   }
 
   /* Form Fields */
@@ -142,7 +143,7 @@
   }
 
   .field-lg {
-    @apply field py-4 text-base;
+    @apply w-full bg-muted-bg border border-muted-light rounded-[--radius-md] px-4 py-4 text-base font-sans text-foreground outline-none focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary-lighter transition-all placeholder:text-muted;
   }
 
   .field:disabled {
@@ -155,59 +156,59 @@
   }
 
   .btn-lg {
-    @apply btn px-8 py-4 text-base rounded-[--radius-lg];
+    @apply inline-flex items-center justify-center gap-2 rounded-[--radius-lg] font-medium text-base cursor-pointer transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed px-8 py-4;
   }
 
   .btn-md {
-    @apply btn px-6 py-3;
+    @apply inline-flex items-center justify-center gap-2 rounded-[--radius-md] font-medium text-sm cursor-pointer transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-3;
   }
 
   .btn-sm {
-    @apply btn px-4 py-2 text-xs;
+    @apply inline-flex items-center justify-center gap-2 rounded-[--radius-md] font-medium text-xs cursor-pointer transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2;
   }
 
   .btn-xs {
-    @apply btn px-3 py-1.5 text-xs;
+    @apply inline-flex items-center justify-center gap-2 rounded-[--radius-md] font-medium text-xs cursor-pointer transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1.5;
   }
 
   /* Primary Button - Purple gradient */
   .btn-primary {
-    @apply btn bg-primary text-primary-foreground shadow-[--shadow-glow-purple] hover:bg-primary-light active:bg-primary;
+    @apply inline-flex items-center justify-center gap-2 rounded-[--radius-md] font-medium text-sm cursor-pointer transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-primary-foreground shadow-[--shadow-glow-purple] hover:bg-primary-light active:bg-primary;
   }
 
   /* Secondary Button - Light purple */
   .btn-secondary {
-    @apply btn bg-primary-lighter text-primary border border-primary hover:bg-primary-light;
+    @apply inline-flex items-center justify-center gap-2 rounded-[--radius-md] font-medium text-sm cursor-pointer transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-primary-lighter text-primary border border-primary hover:bg-primary-light;
   }
 
   /* Accent Button - Pink */
   .btn-accent {
-    @apply btn bg-accent-pink text-white shadow-[--shadow-glow-pink] hover:opacity-90 active:scale-95;
+    @apply inline-flex items-center justify-center gap-2 rounded-[--radius-md] font-medium text-sm cursor-pointer transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-accent-pink text-white shadow-[--shadow-glow-pink] hover:opacity-90;
   }
 
   /* Ghost Button - Transparent */
   .btn-ghost {
-    @apply btn text-foreground hover:bg-muted-bg active:bg-muted-light;
+    @apply inline-flex items-center justify-center gap-2 rounded-[--radius-md] font-medium text-sm cursor-pointer transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-foreground hover:bg-muted-bg active:bg-muted-light;
   }
 
   /* Outline Button */
   .btn-outline {
-    @apply btn border border-border text-foreground hover:bg-muted-bg hover:border-muted;
+    @apply inline-flex items-center justify-center gap-2 rounded-[--radius-md] font-medium text-sm cursor-pointer transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed border border-border text-foreground hover:bg-muted-bg hover:border-muted;
   }
 
   /* Success Button */
   .btn-success {
-    @apply btn bg-accent-green text-white hover:opacity-90 shadow-[0_8px_20px_rgba(16,185,129,0.25)];
+    @apply inline-flex items-center justify-center gap-2 rounded-[--radius-md] font-medium text-sm cursor-pointer transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-accent-green text-white hover:opacity-90 shadow-[0_8px_20px_rgba(16,185,129,0.25)];
   }
 
   /* Danger Button */
   .btn-danger {
-    @apply btn bg-accent-orange text-white hover:opacity-90 shadow-[0_8px_20px_rgba(249,115,22,0.25)];
+    @apply inline-flex items-center justify-center gap-2 rounded-[--radius-md] font-medium text-sm cursor-pointer transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-accent-orange text-white hover:opacity-90 shadow-[0_8px_20px_rgba(249,115,22,0.25)];
   }
 
   /* Icon Button */
   .btn-icon {
-    @apply btn w-10 h-10 p-0 rounded-full flex items-center justify-center;
+    @apply inline-flex items-center justify-center gap-2 rounded-full font-medium text-sm cursor-pointer transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed w-10 h-10 p-0;
   }
 
   /* Badges & Tags */
@@ -216,23 +217,23 @@
   }
 
   .badge-primary {
-    @apply badge bg-primary-lighter text-primary;
+    @apply inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-primary-lighter text-primary;
   }
 
   .badge-success {
-    @apply badge bg-success-light text-accent-green;
+    @apply inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-success-light text-accent-green;
   }
 
   .badge-warning {
-    @apply badge bg-warning-light text-accent-yellow;
+    @apply inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-warning-light text-accent-yellow;
   }
 
   .badge-error {
-    @apply badge bg-error-light text-accent-orange;
+    @apply inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-error-light text-accent-orange;
   }
 
   .badge-info {
-    @apply badge bg-info-light text-info;
+    @apply inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-info-light text-info;
   }
 
   /* Anchor/Hero Card */
@@ -273,7 +274,7 @@
   }
 
   .chip-active {
-    @apply bg-primary text-primary-foreground border-primary;
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-[--radius-full] bg-primary text-primary-foreground border-primary text-sm font-medium cursor-pointer transition-all active:scale-95;
   }
 
   /* Divider */
@@ -423,6 +424,10 @@
     @apply text-accent-orange;
   }
 
+  .label-required {
+    @apply block text-sm font-medium text-foreground mb-2;
+  }
+
   /* Help Text */
   .help-text {
     @apply text-xs text-muted mt-1;
@@ -447,7 +452,7 @@
   }
 
   .gradient-cool {
-    @apply bg-gradient-to-r from-info to-cyan;
+    @apply bg-gradient-to-r from-info to-accent-cyan;
   }
 }
 

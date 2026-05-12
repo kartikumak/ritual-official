@@ -68,7 +68,7 @@ export default function ProfilePage() {
         <header className="flex items-center justify-between mb-10">
           <button 
             onClick={() => router.back()} 
-            className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted hover:text-primary transition-all active:scale-95"
+            className="btn-icon bg-secondary text-muted hover:text-primary transition-all"
           >
             <ChevronLeft size={20} />
           </button>
@@ -82,7 +82,7 @@ export default function ProfilePage() {
           {/* Avatar Section */}
           <section className="flex flex-col items-center py-8">
             <div className="relative mb-4">
-              <div className="w-24 h-24 rounded-full bg-primary-light flex items-center justify-center border-[2px] border-primary shadow-sm overflow-hidden">
+              <div className="w-24 h-24 rounded-full bg-primary-lighter flex items-center justify-center border-[2.5px] border-primary shadow-lg overflow-hidden">
                 {formData.avatar_url ? (
                   <img src={formData.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
@@ -94,26 +94,26 @@ export default function ProfilePage() {
               </button>
             </div>
             <div className="text-center">
-              <p className="text-[14px] font-bold text-foreground">{formData.name || "Unnamed Entity"}</p>
-              <p className="text-[11px] text-muted">{user?.email}</p>
+              <h2 className="text-xl font-bold text-foreground">{formData.name || "Unnamed Entity"}</h2>
+              <p className="text-[11px] font-medium text-muted uppercase tracking-wider">{user?.email}</p>
             </div>
           </section>
 
           {/* Quick Stats Grid */}
           <div className="grid grid-cols-2 gap-3">
             <div className="card-sm p-5 text-center">
-              <div className="w-8 h-8 rounded-lg bg-[#e2f5ec] flex items-center justify-center text-[#2d8a5a] mx-auto mb-2">
-                <Activity size={16} />
+              <div className="w-10 h-10 rounded-xl bg-accent-green/10 flex items-center justify-center text-accent-green mx-auto mb-2 shadow-sm">
+                <Activity size={18} />
               </div>
               <p className="text-[10px] font-bold uppercase text-muted mb-1">Total Rites</p>
-              <p className="text-[18px] font-bold text-foreground">{profile?.total_rituals || 0}</p>
+              <p className="text-[20px] font-bold text-foreground">{profile?.total_rituals || 0}</p>
             </div>
             <div className="card-sm p-5 text-center">
-              <div className="w-8 h-8 rounded-lg bg-[#fef3d8] flex items-center justify-center text-[#d97706] mx-auto mb-2">
-                <Award size={16} />
+              <div className="w-10 h-10 rounded-xl bg-accent-yellow/10 flex items-center justify-center text-accent-yellow mx-auto mb-2 shadow-sm">
+                <Award size={18} />
               </div>
               <p className="text-[10px] font-bold uppercase text-muted mb-1">Mastery</p>
-              <p className="text-[18px] font-bold text-foreground">Lvl {Math.floor((profile?.total_rituals || 0) / 10) + 1}</p>
+              <p className="text-[20px] font-bold text-foreground">Lvl {Math.floor((profile?.total_rituals || 0) / 10) + 1}</p>
             </div>
           </div>
 
@@ -136,9 +136,9 @@ export default function ProfilePage() {
                     type="number"
                     value={formData.weekly_goal}
                     onChange={e => setFormData({...formData, weekly_goal: parseInt(e.target.value) || 0})}
-                    className="field py-3.5 flex-1"
+                    className="field flex-1"
                   />
-                  <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center text-primary">
+                  <div className="w-12 h-12 rounded-[--radius-md] bg-primary-lighter flex items-center justify-center text-primary shadow-sm">
                     <Target size={24} />
                   </div>
                 </div>
@@ -146,8 +146,7 @@ export default function ProfilePage() {
             </div>
           </section>
 
-          {/* Terminal Actions */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-6">
             <button 
               onClick={handleSave}
               disabled={isSaving}
@@ -158,7 +157,7 @@ export default function ProfilePage() {
             </button>
             <button 
               onClick={signOut}
-              className="w-14 h-14 bg-secondary rounded-full text-rose-500 flex items-center justify-center active:scale-95 transition-all"
+              className="btn-outline w-14 h-14 bg-white rounded-full text-accent-orange border-accent-orange/20"
             >
               <LogOut size={20} />
             </button>

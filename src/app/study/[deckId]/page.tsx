@@ -287,16 +287,16 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
             <motion.div key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 pb-10">
               {/* Result Score Card */}
               <div className={cn(
-                "rounded-[--radius] p-5 animate-in slide-in-from-bottom-2 duration-500",
-                result.evalResult.level === 'strong' ? "bg-gradient-to-br from-[#e2f5ec] to-[#d4f0e3] border-[1.5px] border-[#b8e8cf]" : 
-                result.evalResult.level === 'medium' ? "bg-gradient-to-br from-[#fef3d8] to-[#fdedc5] border-[1.5px] border-[#f5d98b]" : 
-                "bg-gradient-to-br from-[#fde8e8] to-[#fcd8d8] border-[1.5px] border-[#f5b8b8]"
+                "card-md animate-in slide-in-from-bottom-2 duration-500",
+                result.evalResult.level === 'strong' ? "bg-success-light border-accent-green/20" : 
+                result.evalResult.level === 'medium' ? "bg-warning-light border-accent-yellow/20" : 
+                "bg-error-light border-accent-orange/20"
               )}>
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-[28px] leading-none">{result.evalResult.emoji}</span>
                   <div>
                     <h3 className="text-[15px] font-bold text-foreground leading-none">{result.evalResult.label}</h3>
-                    <p className="text-[11px] text-muted mt-1">{result.evalResult.sublabel}</p>
+                    <p className="text-[11px] text-muted mt-1 uppercase tracking-wider font-bold">{result.evalResult.sublabel}</p>
                   </div>
                 </div>
                 <p className="text-[12px] text-muted leading-relaxed italic">
@@ -313,10 +313,10 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
                 />
                 <div className="flex flex-wrap gap-2 mt-2">
                   {result.evalResult.hitKeywords.map((kw: string) => (
-                    <span key={kw} className="bg-[#e2f5ec] text-[#2d8a5a] text-[11px] font-medium px-2.5 py-1 rounded-full">✓ {kw}</span>
+                    <span key={kw} className="badge-success">✓ {kw}</span>
                   ))}
                   {result.evalResult.missKeywords.map((kw: string) => (
-                    <span key={kw} className="bg-[#fde8e8] text-[#c0504d] text-[11px] font-medium px-2.5 py-1 rounded-full italic">✗ {kw}</span>
+                    <span key={kw} className="badge-error italic">✗ {kw}</span>
                   ))}
                 </div>
               </div>
@@ -337,7 +337,7 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
                 </div>
                 <div className="card-sm p-3 text-center">
                   <p className="text-[10px] text-muted uppercase font-bold mb-1">Interval</p>
-                  <p className="text-[12px] font-bold text-accent">+{result.newSRS.interval_days}d</p>
+                  <p className="text-[12px] font-bold text-accent-pink">+{result.newSRS.interval_days}d</p>
                 </div>
                 <div className="card-sm p-3 text-center">
                    <p className="text-[10px] text-muted uppercase font-bold mb-1">Next</p>
@@ -348,16 +348,16 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-4">
                 <button 
                   onClick={() => setPhase('input')}
-                  className="btn bg-secondary text-muted px-6 text-[13px] font-medium"
+                  className="btn-outline flex-1 py-4 text-[13px] font-bold uppercase tracking-widest"
                 >
                   Retry
                 </button>
                 <button 
                   onClick={nextAnchor}
-                  className="btn-primary flex-1 py-4 text-[13px] font-bold uppercase tracking-widest"
+                  className="btn-primary flex-[2] py-4 text-[13px] font-bold uppercase tracking-widest"
                 >
                   Next Anchor →
                 </button>
