@@ -41,65 +41,108 @@ export default function Home() {
   }, [user]);
 
   const fetchData = async () => {
+    if (!user) return;
     setLoading(true);
     setDbError(null);
     try {
       // 1. Profile
-      const { data: profile, error: pErr } = await supabase.from('profiles').select('*').eq('id', user?.id).single();
-      if (!pErr) {
-        setProfile(profile);
-        setEditedName(profile.name || '');
+      let { data: profileData, error: pErr } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      
+      if (pErr && pErr.code === 'PGRST116') {
+        console.warn("Profile not found for authenticated user. Attempting self-healing creation...");
+        const { data: newProfile, error: createErr } = await supabase.from('profiles').insert({
+          id: user.id,
+          email: user.email,
+          name: user.user_metadata?.name || user.email?.split('@')[0] || 'Explorer'
+        }).select().single();
+        
+        if (createErr) {
+          console.error("Self-healing profile creation failed:", createErr);
+          // If RLS blocks insert, we might need to show this error
+          if (createErr.code === '42501') {
+            setDbError("Access denied when creating profile. Ensure RLS policies allow profile creation for individual users.");
+          }
+        } else {
+          profileData = newProfile;
+          console.log("Profile created successfully via self-healing.");
+        }
+      } else if (pErr) {
+        console.error("Profile fetch error:", pErr);
+        if (pErr.message.includes('relation "profiles" does not exist')) {
+           setDbError("Database tables are missing. Please initialize the schema.");
+        }
+      }
+
+      if (profileData) {
+        setProfile(profileData);
+        setEditedName(profileData.name || '');
       }
 
       // 2. Decks with anchor counts
       const { data: decksData, error: dErr } = await supabase
         .from('decks')
-        .select('*, anchors(count)')
-        .eq('user_id', user?.id);
+        .select(`
+          *,
+          anchors (
+            id
+          )
+        `)
+        .eq('user_id', user.id);
       
       if (dErr) {
-        if (dErr.code === 'PGRST116' || dErr.message.includes('relation "decks" does not exist')) {
-          setDbError("Tables not initialized. Please run the SQL schema in your Supabase SQL Editor.");
-        } else {
-          setDbError(dErr.message);
-        }
+        console.error("Decks fetch error:", dErr);
+        setDbError(dErr.message);
+      } else {
+        // Count anchors manually since multi-level select count can be tricky
+        const decksWithCounts = decksData?.map(d => ({
+          ...d,
+          anchorCount: d.anchors?.length || 0
+        })) || [];
+        setDecks(decksWithCounts);
       }
-      setDecks(decksData || []);
 
       // 3. Stats
-      const { count: totalReviews } = await supabase
+      const { count: totalReviews, error: totalErr } = await supabase
         .from('review_logs')
         .select('*', { count: 'exact', head: true })
-        .eq('user_id', user?.id);
+        .eq('user_id', user.id);
 
-      // Simple weekly count
+      if (totalErr) console.error("Total reviews stats error:", totalErr);
+
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      const { count: weeklyReviews } = await supabase
+      const { count: weeklyReviews, error: weeklyErr } = await supabase
         .from('review_logs')
         .select('*', { count: 'exact', head: true })
-        .eq('user_id', user?.id)
+        .eq('user_id', user.id)
         .gte('reviewed_at', sevenDaysAgo.toISOString());
+
+      if (weeklyErr) console.error("Weekly reviews stats error:", weeklyErr);
 
       setStats({ 
         total: totalReviews || 0, 
         weekly: weeklyReviews || 0 
       });
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error("Fatal fetch data error:", err);
+      setDbError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   const handleCreateDeck = async () => {
-    if (!newDeck.name) return;
-    const { error } = await supabase.from('decks').insert({
-      user_id: user?.id,
+    if (!newDeck.name || !user) return;
+    const { data: createdDeck, error } = await supabase.from('decks').insert({
+      user_id: user.id,
       name: newDeck.name,
       description: newDeck.description
-    });
-    if (!error) {
+    }).select().single();
+    
+    if (error) {
+      console.error("Deck creation error:", error);
+      alert("Failed to create collection: " + error.message);
+    } else {
       setShowNewDeckModal(false);
       setNewDeck({ name: '', description: '' });
       fetchData();
@@ -121,14 +164,15 @@ export default function Home() {
       reference_answer: newAnchor.reference_answer
     });
 
-    if (!error) {
+    if (error) {
+      console.error("Anchor creation error:", error);
+      alert("Error: " + error.message);
+    } else {
       setActiveTab('decks');
       setNewAnchor({ word: '', hint: '', level: 'basic', keywords: '', reference_answer: '' });
       setSelectedDeckId('');
       fetchData();
       alert("Anchor created successfully!");
-    } else {
-      alert("Error: " + error.message);
     }
   };
 
@@ -289,9 +333,9 @@ export default function Home() {
                     <div className="flex items-center justify-between mt-auto">
                       <div className="px-3 py-1.5 rounded-full text-[10px] font-bold bg-primary/5 border border-primary/10 text-primary flex items-center gap-1.5 shadow-sm">
                         <LayoutGrid size={10} />
-                        {(deck.anchors?.[0]?.count || 0)} anchors
+                        {deck.anchorCount} anchors
                       </div>
-                      {(deck.anchors?.[0]?.count || 0) > 0 ? (
+                      {deck.anchorCount > 0 ? (
                         <Link href={`/study/${deck.id}`}>
                           <button className="px-6 py-2.5 rounded-full text-xs font-bold bg-primary text-white shadow-lg active:scale-95 hover:bg-primary-light transition-all flex items-center gap-2">
                             Dive In

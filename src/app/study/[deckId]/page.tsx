@@ -89,17 +89,22 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
       } else {
         setAnchors(sorted);
         // Create session record
-        const { data: sess } = await supabase.from('sessions').insert({ user_id: user?.id, deck_id: deckId }).select().single();
-        setSession(sess);
+        if (user) {
+          const { data: sess, error: sErr } = await supabase.from('sessions').insert({ user_id: user.id, deck_id: deckId }).select().single();
+          if (sErr) console.error("Session creation error:", sErr);
+          setSession(sess);
+        }
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error("Session start error:", err);
+      alert("Failed to start session: " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
   const handleEvaluate = async () => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     const current = anchors[index];
     
@@ -122,9 +127,9 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
 
       setResult(data);
       setPhase('result');
-    } catch (err) {
-      console.error(err);
-      alert('Evaluation failed. Check logs.');
+    } catch (err: any) {
+      console.error("Evaluation error:", err);
+      alert('Evaluation failed: ' + err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -142,8 +147,10 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
   };
 
   const completeSession = async () => {
-    const results = anchors.map((a, i) => i <= index); // Mocking results collection for now
-    await supabase.from('sessions').update({ ended_at: new Date().toISOString() }).eq('id', session?.id);
+    if (session?.id) {
+       const { error } = await supabase.from('sessions').update({ ended_at: new Date().toISOString() }).eq('id', session.id);
+       if (error) console.error("Session closure error:", error);
+    }
     setPhase('complete');
   };
 
