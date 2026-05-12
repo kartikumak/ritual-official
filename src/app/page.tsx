@@ -158,449 +158,401 @@ export default function Home() {
   }
 
   const renderDashboard = () => (
-    <div className="space-y-8 pb-24">
-      {/* Decorative Background Blobs */}
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary/20 rounded-full blur-[120px] animate-blob" />
-        <div className="absolute bottom-[10%] left-[-10%] w-[40%] h-[40%] bg-secondary/10 rounded-full blur-[100px] animate-blob" style={{ animationDelay: '3s' }} />
-      </div>
-
-      {/* Header */}
-      <header className="flex items-center justify-between mt-6">
+    <div className="space-y-6 pb-24 max-w-[420px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {/* App Header */}
+      <header className="flex items-center justify-between py-10 px-0">
         <div>
-          <h1 className="text-4xl font-serif font-black tracking-tighter text-foreground">Hi {profile?.name || "Explorer"}</h1>
-          <p className="text-sm font-bold text-muted-foreground mt-1 tracking-tight opacity-50">Mastering your neural anchors today.</p>
+          <p className="text-[10px] font-medium tracking-[0.13em] uppercase text-muted mb-1">Welcome back</p>
+          <h1 className="text-[26px] font-serif font-normal text-foreground leading-tight">{profile?.name || "Max"}</h1>
         </div>
-        <Link href="/profile">
-          <div className="w-16 h-16 rounded-[2.2rem] bg-card shadow-neumorphic border border-white/5 flex items-center justify-center group overflow-hidden active:scale-95 transition-all p-1">
-            {profile?.avatar_url ? (
-               <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover rounded-[1.8rem]" />
-            ) : (
-               <div className="w-full h-full bg-primary/10 rounded-[1.8rem] flex items-center justify-center">
-                  <span className="text-primary font-black text-xl group-hover:scale-110 transition-transform">{getInitials(profile?.name || user?.email || "?")}</span>
-               </div>
-            )}
-          </div>
+        <Link href="/profile" className="w-[42px] h-[42px] rounded-full bg-primary-light text-primary font-semibold flex items-center justify-center text-[15px] shrink-0 hover:opacity-80 transition-opacity">
+          {getInitials(profile?.name || user?.email || "M")}
         </Link>
       </header>
 
-      {/* Quick Trends Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="stat-card">
-          <div className="w-12 h-12 rounded-[1.5rem] bg-primary/20 flex items-center justify-center mb-5 shadow-lg shadow-primary/10">
-            <Star size={22} className="text-primary" />
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="card-sm animate-in fade-in slide-in-from-bottom-2 duration-500 delay-75">
+          <p className="text-[11px] text-muted mb-1 font-medium">Total Reviewed</p>
+          <div className="flex items-baseline gap-1">
+            <span className="text-[32px] font-semibold text-primary leading-none">{stats.total}</span>
+            <span className="text-[11px] text-muted">anchors</span>
           </div>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">Recalls</p>
-          <p className="text-4xl md:text-5xl font-serif font-black text-foreground mt-2">{stats.total}</p>
         </div>
-        <div className="stat-card sm:col-span-1 lg:col-span-2">
-          <div className="w-12 h-12 rounded-[1.5rem] bg-accent/20 flex items-center justify-center mb-5 shadow-lg shadow-accent/10">
-            <TrendingUp size={22} className="text-accent" />
+        <div className="card-sm animate-in fade-in slide-in-from-bottom-2 duration-500 delay-150">
+          <p className="text-[11px] text-muted mb-1 font-medium">Active Decks</p>
+          <div className="flex items-baseline gap-1">
+            <span className="text-[32px] font-semibold text-foreground leading-none">{decks.length}</span>
+            <span className="text-[11px] text-muted">collections</span>
           </div>
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        </div>
+      </div>
+
+      {/* Activity Graph */}
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-200">
+        <div className="card">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-[13px] font-bold text-foreground">Activity</span>
+            <div className="flex bg-secondary p-0.5 rounded-full">
+               <button 
+                onClick={() => setChartRange("Week")}
+                className={cn(
+                  "px-3 py-1 rounded-full text-[11px] font-medium transition-all",
+                  chartRange === "Week" ? "bg-primary text-white shadow-sm" : "text-muted hover:text-foreground"
+                )}
+               >
+                 Week
+               </button>
+               <button 
+                onClick={() => setChartRange("Month")}
+                className={cn(
+                  "px-3 py-1 rounded-full text-[11px] font-medium transition-all",
+                  chartRange === "Month" ? "bg-primary text-white shadow-sm" : "text-muted hover:text-foreground"
+                )}
+               >
+                 Month
+               </button>
+            </div>
+          </div>
+          <div className="h-[140px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.18}/>
+                    <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <XAxis 
+                  dataKey="day" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 11, fill: 'var(--color-muted)', fontFamily: 'DM Sans' }} 
+                  dy={10}
+                />
+                <Tooltip 
+                  cursor={{ stroke: 'var(--color-border)', strokeWidth: 1 }}
+                  contentStyle={{ 
+                    borderRadius: '10px', 
+                    border: '1px solid var(--color-border)', 
+                    background: '#fff',
+                    boxShadow: 'var(--shadow-sm)',
+                    fontSize: '11px',
+                    fontFamily: 'DM Sans'
+                  }} 
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="count" 
+                  stroke="var(--color-primary)" 
+                  strokeWidth={2.5}
+                  fillOpacity={1} 
+                  fill="url(#colorCount)" 
+                  animationDuration={1500}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* Weekly Progress */}
+      <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-300">
+        <div className="card">
+          <p className="text-[13px] font-bold text-foreground mb-4">Weekly Goal</p>
+          <div className="flex items-center gap-5">
+            <div className="relative w-16 h-16 shrink-0">
+               <svg className="w-full h-full -rotate-90">
+                 <circle cx="32" cy="32" r="26" className="fill-none stroke-secondary stroke-[7px]" />
+                 <motion.circle 
+                  cx="32" cy="32" r="26" 
+                  className="fill-none stroke-primary stroke-[7px] stroke-round"
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: Math.min(1, stats.weekly / (profile?.weekly_goal || 140)) }}
+                  transition={{ duration: 1.5, ease: "easeOut" }}
+                 />
+               </svg>
+               <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[12px] font-bold text-primary">{Math.round((stats.weekly / (profile?.weekly_goal || 140)) * 100)}%</span>
+               </div>
+            </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">Weekly Synchronizations</p>
-              <div className="flex items-baseline gap-2 mt-2">
-                <p className="text-4xl md:text-5xl font-serif font-black text-foreground">{stats.weekly}</p>
-                <p className="text-sm font-bold text-muted-foreground/40 italic">/ {profile?.weekly_goal || 140}</p>
-              </div>
-            </div>
-            <div className="flex-1 max-w-xs w-full bg-white/5 h-2 rounded-full overflow-hidden shadow-inner mb-2">
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.min(100, (stats.weekly / (profile?.weekly_goal || 140)) * 100)}%` }}
-                transition={{ duration: 1.5, ease: "easeOut" }}
-                className="h-full bg-accent shadow-glow"
-              />
+              <div className="text-[22px] font-bold text-primary leading-none mb-1">{stats.weekly} <span className="text-[13px] text-muted font-medium">/ {profile?.weekly_goal || 140}</span></div>
+              <p className="text-[11px] text-muted uppercase tracking-[0.05em]">anchors anchored this week</p>
             </div>
           </div>
-        </div>
-        <div className="stat-card hidden lg:flex flex-col justify-center text-center p-8">
-           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-2">Neural Tier</p>
-           <p className="text-3xl font-serif font-black">{Math.floor(stats.total / 50) + 1}</p>
-           <p className="text-[9px] font-black uppercase text-muted-foreground/30 mt-1">Cognitive Architect</p>
         </div>
       </div>
 
-      {/* Progress Chart Section */}
-      <div className="p-8 rounded-[3.5rem] bg-card border border-white/5 shadow-neumorphic relative overflow-hidden">
-        <div className="flex items-center justify-between mb-10">
-          <div>
-            <h3 className="text-2xl font-serif font-black tracking-tight">Neural Map</h3>
-            <p className="text-[10px] font-black tracking-[0.2em] uppercase text-muted-foreground/30">Your cognitive growth velocity</p>
-          </div>
-          <div className="bg-white/5 p-1.5 rounded-[1.2rem] flex gap-1 border border-white/5 shadow-inner">
-             <button 
-              onClick={() => setChartRange("Week")}
-              className={cn(
-                "px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.1em] transition-all",
-                chartRange === "Week" ? "bg-primary text-white shadow-glow" : "text-muted-foreground hover:bg-white/5"
-              )}
-             >
-               Week
-             </button>
-             <button 
-              onClick={() => setChartRange("Month")}
-              className={cn(
-                "px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.1em] transition-all",
-                chartRange === "Month" ? "bg-primary text-white shadow-glow" : "text-muted-foreground hover:bg-white/5"
-              )}
-             >
-               Month
-             </button>
-          </div>
-        </div>
-        
-        <div className="h-[300px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData}>
-              <defs>
-                <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <XAxis 
-                dataKey="day" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fontSize: 9, fontWeight: 900, fill: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }} 
-                dy={20}
-              />
-              <Tooltip 
-                cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }}
-                contentStyle={{ 
-                  borderRadius: '1.5rem', 
-                  border: '1px solid rgba(255,255,255,0.05)', 
-                  background: '#151921',
-                  boxShadow: '0 20px 40px rgba(0,0,0,0.8)',
-                  fontSize: '10px',
-                  fontWeight: '900',
-                  color: '#fff',
-                  padding: '12px 16px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px'
-                }} 
-              />
-              <Area 
-                type="monotone" 
-                dataKey="count" 
-                stroke="#8B5CF6" 
-                strokeWidth={4}
-                fillOpacity={1} 
-                fill="url(#colorCount)" 
-                animationDuration={2000}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Browse Marketplace Banner */}
-      <Link href="/marketplace">
-        <div className="p-8 rounded-[3.5rem] bg-gradient-to-br from-primary via-[#9333EA] to-[#DB2777] text-white shadow-glow group overflow-hidden relative active:scale-[0.98] transition-all">
-          <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-          <div className="absolute -right-10 -top-10 w-48 h-48 bg-white/10 rounded-full blur-3xl animate-blob" />
-          <div className="flex items-center justify-between relative z-10">
-            <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-[1.8rem] bg-white/20 backdrop-blur-md shadow-xl flex items-center justify-center rotate-6 group-hover:rotate-0 transition-transform">
-                <ShoppingBag size={32} />
-              </div>
-              <div>
-                <h3 className="text-2xl font-serif font-black leading-tight">Explore Store</h3>
-                <p className="text-sm font-bold text-white/70">Bridge shared knowledge ritual</p>
-              </div>
-            </div>
-            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center group-hover:translate-x-2 transition-transform">
-              <ChevronRight size={28} />
-            </div>
-          </div>
-        </div>
-      </Link>
-
-      {/* Active Rituals Rows */}
-      <section>
-        <div className="flex items-center justify-between mb-8 px-2">
-          <h2 className="text-2xl font-serif font-black tracking-tight underline decoration-primary/30 decoration-4 underline-offset-8">Neural Domains</h2>
+      {/* Decks Section */}
+      <section className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-500 delay-400">
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-[13px] font-bold text-foreground">My Decks</h2>
           <button 
             onClick={() => setShowNewDeckModal(true)}
-            className="w-12 h-12 rounded-2xl bg-card shadow-neumorphic flex items-center justify-center text-primary group hover:scale-110 active:scale-90 transition-all border border-white/5"
+            className="text-primary bg-primary-light px-3 py-1.5 rounded-full text-[11px] font-semibold flex items-center gap-1.5 hover:opacity-80 transition-all"
           >
-            <Plus size={24} className="group-hover:rotate-90 transition-transform duration-500" />
+            <Plus size={12} />
+            New deck
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="space-y-3">
           {decks.map((deck, i) => (
             <motion.div 
               key={deck.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="p-3 rounded-[2.5rem] bg-card border border-white/5 shadow-neumorphic group relative overflow-hidden transition-all hover:bg-card/80"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 + i * 0.1 }}
+              className="bg-card rounded-[--radius] p-4 border border-border border-l-[3px] border-l-primary-light shadow-[--shadow-sm] hover:shadow-[--shadow-md] transition-all group cursor-pointer active:scale-[0.99]"
             >
-              <div className="flex items-center gap-5">
-                <div className="w-20 h-20 rounded-[2rem] bg-primary/10 flex flex-col items-center justify-center overflow-hidden shrink-0">
-                   <p className="text-2xl font-black text-primary">{deck.anchorCount}</p>
-                   <p className="text-[9px] font-black uppercase text-primary/50 tracking-tighter">Nodes</p>
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="text-[14px] font-semibold text-foreground leading-tight">{deck.name}</h3>
+                  <p className="text-[11px] text-muted mt-0.5 line-clamp-1">{deck.description || "Synthesize domain knowledge"}</p>
                 </div>
-                
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-xl font-serif font-black text-foreground group-hover:text-primary transition-colors truncate">{deck.name}</h3>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="px-3 py-1 rounded-full bg-foreground/5 text-[9px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-                       <LayoutGrid size={10} />
-                       {deck.category || 'General'}
-                    </span>
-                    {deck.is_public && (
-                      <span className="px-3 py-1 rounded-full bg-accent/10 text-[9px] font-black uppercase tracking-widest text-accent">Published</span>
-                    )}
-                  </div>
+                <button 
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    if(confirm("Neural deletion is irreversible. Proceed?")) {
+                      const { error } = await supabase.from('decks').delete().eq('id', deck.id);
+                      if(!error) fetchData();
+                    }
+                  }}
+                  className="text-muted p-1 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+              <div className="flex items-center justify-between mt-3">
+                <div className="flex items-center gap-1.5 text-[11px] text-muted font-medium uppercase tracking-tight">
+                   <div className="w-5 h-5 bg-secondary rounded flex items-center justify-center">
+                     <BookOpen size={10} className="text-primary" />
+                   </div>
+                   {deck.anchorCount} anchors
                 </div>
-
-                <div className="flex gap-2 pr-4">
-                  <Link href={`/study/${deck.id}`}>
-                    <button className="w-14 h-14 rounded-2xl bg-foreground text-white shadow-lg active:scale-90 hover:bg-primary transition-all flex items-center justify-center group-hover:shadow-glow">
-                      <Zap size={20} fill="currentColor" />
-                    </button>
-                  </Link>
-                   <button 
-                    onClick={async () => {
-                      const { error } = await supabase.from('decks').update({ is_public: !deck.is_public }).eq('id', deck.id);
-                      if (!error) fetchData();
-                    }}
-                    className={cn(
-                      "w-14 h-14 rounded-2xl flex items-center justify-center transition-all bg-foreground/5 active:scale-90",
-                      deck.is_public ? "text-primary bg-primary/5" : "text-muted-foreground/20"
-                    )}
-                   >
-                     <ShoppingBag size={20} />
-                   </button>
-                </div>
+                <Link href={`/study/${deck.id}`}>
+                  <button className="bg-primary text-white text-[11px] font-semibold px-4 py-1.5 rounded-full shadow-[0_3px_10px_rgba(124,111,205,0.32)] hover:opacity-80 transition-opacity">
+                    Study
+                  </button>
+                </Link>
               </div>
             </motion.div>
           ))}
-
           {decks.length === 0 && (
-            <div className="p-16 text-center rounded-[3.5rem] bg-card border-2 border-dashed border-white/5 opacity-50">
-               <p className="text-xl font-serif font-black text-muted-foreground">Domain Void</p>
-               <p className="text-sm font-bold text-muted-foreground/60 mt-1">Initialize your first neural collection.</p>
+            <div className="card text-center py-10 opacity-60 bg-secondary/30 border-dashed border-2">
+              <p className="text-[13px] font-medium text-muted italic">Initialize a new cognitive domain...</p>
             </div>
           )}
         </div>
       </section>
+
+      {/* Store Entry */}
+      <Link href="/marketplace" className="block animate-in fade-in slide-in-from-bottom-2 duration-500 delay-500">
+        <div className="card bg-primary-light border-primary/10 flex items-center justify-between hover:bg-primary-light/80 transition-all">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-primary">
+              <ShoppingBag size={20} />
+            </div>
+            <div>
+              <p className="text-[13px] font-bold text-accent-fg">Ritual Marketplace</p>
+              <p className="text-[11px] text-muted">Aquire shared neural models</p>
+            </div>
+          </div>
+          <ChevronRight size={16} className="text-primary" />
+        </div>
+      </Link>
     </div>
   );
 
   const renderCreateAnchor = () => (
-    <div className="space-y-10 pb-32">
-      <header className="space-y-2">
-        <h1 className="text-4xl font-serif font-black tracking-tight text-foreground leading-none">Anchor Deep</h1>
-        <p className="text-[10px] font-black tracking-[0.2em] uppercase text-muted-foreground/30">Initialize new neural pathways via deep-context anchors.</p>
+    <div className="space-y-6 pb-24 max-w-[420px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <header className="py-8">
+        <p className="text-[10px] font-medium tracking-[0.13em] uppercase text-muted mb-1">New Connection</p>
+        <h1 className="text-[26px] font-serif font-normal text-foreground leading-tight">Anchor Deep</h1>
       </header>
 
-      <div className="p-12 rounded-[4rem] bg-card border border-white/5 shadow-neumorphic space-y-12 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/10 transition-colors" />
-        
-        <div className="space-y-4">
-          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/20 ml-2 block italic">Neural Knowledge Base</label>
-          <div className="relative group">
+      <div className="card space-y-4">
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-bold text-muted uppercase tracking-tight ml-1">Domain</label>
+          <div className="relative">
             <select 
               value={selectedDeckId}
               onChange={(e) => setSelectedDeckId(e.target.value)}
-              className="w-full h-20 bg-white/5 shadow-neumorphic-inset rounded-[2.5rem] px-8 text-lg font-bold focus:ring-8 focus:ring-primary/5 outline-none appearance-none border border-transparent focus:border-primary/20 transition-all text-foreground"
+              className="field appearance-none pr-10"
             >
-              <option value="" disabled className="bg-background">Select a ritual domain...</option>
+              <option value="" disabled>Select a domain...</option>
               {decks.map(d => (
-                <option key={d.id} value={d.id} className="bg-background">{d.name}</option>
+                <option key={d.id} value={d.id}>{d.name}</option>
               ))}
             </select>
-            <div className="absolute right-8 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground/30">
-              <ChevronRight size={20} className="rotate-90" />
-            </div>
+            <ChevronRight size={14} className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 text-muted pointer-events-none" />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-          <div className="space-y-4">
-            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/20 ml-2 block italic">Core Conceptual Key</label>
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-muted uppercase tracking-tight ml-1">Conceptual Key</label>
             <input 
               value={newAnchor.word}
               onChange={(e) => setNewAnchor({...newAnchor, word: e.target.value})}
-              className="w-full h-20 bg-white/5 shadow-neumorphic-inset rounded-[2.5rem] px-8 text-xl font-black focus:ring-8 focus:ring-primary/5 outline-none border border-transparent focus:border-primary/20 transition-all text-white placeholder:text-muted-foreground/10" 
+              className="field" 
               placeholder="e.g. Hebbian Learning"
             />
           </div>
-          <div className="space-y-4">
-            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/20 ml-2 block italic">Subtle Retrieval Hint</label>
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-muted uppercase tracking-tight ml-1">Subtle Hint</label>
             <input 
               value={newAnchor.hint}
               onChange={(e) => setNewAnchor({...newAnchor, hint: e.target.value})}
-              className="w-full h-20 bg-white/5 shadow-neumorphic-inset rounded-[2.5rem] px-8 text-sm font-bold focus:ring-8 focus:ring-primary/5 outline-none border border-transparent focus:border-primary/20 transition-all text-white placeholder:text-muted-foreground/10" 
+              className="field shrink-0" 
               placeholder="Cells that fire together..."
             />
           </div>
         </div>
 
-        <div className="space-y-4">
-          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/20 ml-2 block italic">Semantic Validation Strings (Keywords)</label>
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-bold text-muted uppercase tracking-tight ml-1">Keywords</label>
           <input 
             value={newAnchor.keywords}
             onChange={(e) => setNewAnchor({...newAnchor, keywords: e.target.value})}
-            className="w-full h-20 bg-white/5 shadow-neumorphic-inset rounded-[2.5rem] px-8 text-sm font-bold focus:ring-8 focus:ring-primary/5 outline-none border border-transparent focus:border-primary/20 transition-all text-white placeholder:text-muted-foreground/10" 
+            className="field font-mono text-[11px]" 
             placeholder="synapse, neurons, connection, reinforcing..."
           />
+          <p className="text-[9px] text-muted italic ml-1 leading-relaxed">Comma-separated keys for semantic validation</p>
         </div>
 
-        <div className="space-y-4">
-          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/20 ml-2 block italic">Canonical Manifestation (Ground Truth)</label>
+        <div className="space-y-1.5">
+          <label className="text-[11px] font-bold text-muted uppercase tracking-tight ml-1">Reference Truth</label>
           <textarea 
             value={newAnchor.reference_answer}
             onChange={(e) => setNewAnchor({...newAnchor, reference_answer: e.target.value})}
-            className="w-full h-48 bg-white/5 shadow-neumorphic-inset rounded-[3rem] p-10 text-lg font-bold focus:ring-8 focus:ring-primary/5 outline-none resize-none leading-relaxed border border-transparent focus:border-primary/20 transition-all text-white placeholder:text-muted-foreground/10" 
-            placeholder="Articulate the concept in exhaustive detail. The Architect AI will use this to verify your future neural synchronizations."
+            className="field min-h-[140px] resize-none leading-relaxed" 
+            placeholder="Articulate the concept in exhaustive detail..."
           />
         </div>
 
         <button 
           onClick={handleCreateAnchor}
           disabled={!selectedDeckId || !newAnchor.word}
-          className="w-full h-24 bg-primary text-white font-black rounded-[3rem] shadow-glow active:scale-95 transition-all text-sm uppercase tracking-[0.3em] disabled:opacity-20 group"
+          className="btn-primary w-full py-4 rounded-[--radius-sm] text-[13px] font-bold uppercase tracking-widest mt-2 disabled:opacity-40"
         >
-          <div className="flex items-center justify-center gap-4">
-            <Zap size={24} fill="currentColor" className="group-hover:scale-125 transition-transform" />
-            Initialize Anchor
-          </div>
+          Initialize Anchor
         </button>
+      </div>
+
+      {/* Guidance */}
+      <div className="card bg-primary-light border-transparent flex items-start gap-4">
+        <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center shrink-0">
+          <Zap size={16} className="text-primary fill-primary" />
+        </div>
+        <p className="text-[11px] leading-relaxed text-muted">
+          <strong className="text-accent-fg">Deep-context anchors</strong> are cognitive nodes that bind abstract concepts to specific retrieval cues. The AI Architect will use your reference truth to evaluate your neural synchronization during study rituals.
+        </p>
       </div>
     </div>
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-10 min-h-screen relative">
-      <AnimatePresence mode="wait">
-        {activeTab === 'decks' && (
-          <motion.div key="dashboard" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-            {renderDashboard()}
-          </motion.div>
-        )}
-        {activeTab === 'create' && (
-          <motion.div key="create" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-            {renderCreateAnchor()}
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <div className="min-h-screen bg-background relative selection:bg-primary/20">
+      <main className="px-5 max-w-[420px] mx-auto min-h-screen pb-32">
+        <AnimatePresence mode="wait">
+          {activeTab === 'decks' && (
+            <motion.div key="dashboard">
+              {renderDashboard()}
+            </motion.div>
+          )}
+          {activeTab === 'create' && (
+            <motion.div key="create">
+              {renderCreateAnchor()}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
 
       {/* Navigation Rail */}
-      <nav className="fixed bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 bg-card/60 backdrop-blur-3xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] border border-white/5 p-1.5 sm:p-2 rounded-[2rem] sm:rounded-[2.5rem] flex items-center gap-1 sm:gap-2 z-50 ring-1 ring-white/10 active:scale-95 transition-all">
-        {[
-          { id: 'decks', icon: LayoutGrid, label: 'Rituals' },
-          { id: 'create', icon: Plus, label: 'Anchor' },
-          { id: 'marketplace', icon: ShoppingBag, label: 'Store', href: '/marketplace' },
-          { id: 'profile', icon: User, label: 'Profile', href: '/profile' },
-        ].map((item) => (
-          item.href ? (
-            <Link key={item.id} href={item.href} className="group">
-              <button className="flex items-center gap-2 sm:gap-3 px-5 sm:px-8 py-3 sm:py-4 rounded-[1.5rem] sm:rounded-[1.8rem] text-[9px] sm:text-[10px] font-black uppercase text-muted-foreground hover:text-primary hover:bg-white/5 transition-all tracking-[0.1em] sm:tracking-[0.2em]">
-                <item.icon size={20} className="sm:w-[22px] sm:h-[22px] group-hover:scale-110 transition-transform" />
-                <span className="hidden sm:inline line-clamp-1">{item.label}</span>
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-3xl border-t border-border">
+        <div className="max-w-[420px] mx-auto h-[72px] flex justify-around items-center px-4">
+          {[
+            { id: 'decks', icon: LayoutGrid, label: 'Decks' },
+            { id: 'study', icon: Star, label: 'Study', onClick: () => {
+              if (decks.length > 0) router.push(`/study/${decks[0].id}`);
+              else setActiveTab('decks');
+            }},
+            { id: 'create', icon: Plus, label: 'Create' },
+            { id: 'profile', icon: SettingsIcon, label: 'Settings', href: '/profile' },
+          ].map((item) => (
+            item.href ? (
+              <Link key={item.id} href={item.href} className="group flex flex-col items-center gap-1 w-16">
+                <div className={cn(
+                  "w-12 h-8 rounded-2xl flex items-center justify-center transition-all",
+                  "text-muted group-hover:text-foreground"
+                )}>
+                  <item.icon size={20} strokeWidth={1.8} />
+                </div>
+                <span className="text-[10px] font-medium text-muted group-hover:text-foreground">{item.label}</span>
+              </Link>
+            ) : (
+              <button 
+                key={item.id}
+                onClick={item.onClick || (() => setActiveTab(item.id))}
+                className={cn(
+                  "group flex flex-col items-center gap-1 w-16 transition-all",
+                  activeTab === item.id ? "text-primary" : "text-muted"
+                )}
+              >
+                <div className={cn(
+                  "w-12 h-8 rounded-2xl flex items-center justify-center transition-all",
+                  activeTab === item.id ? "bg-primary-light" : "group-hover:bg-secondary"
+                )}>
+                   <item.icon size={20} strokeWidth={activeTab === item.id ? 2.5 : 1.8} />
+                </div>
+                <span className={cn("text-[10px]", activeTab === item.id ? "font-bold" : "font-medium")}>{item.label}</span>
               </button>
-            </Link>
-          ) : (
-            <button 
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={cn(
-                "flex items-center gap-2 sm:gap-3 px-5 sm:px-8 py-3 sm:py-4 rounded-[1.5rem] sm:rounded-[1.8rem] text-[9px] sm:text-[10px] font-black uppercase transition-all tracking-[0.1em] sm:tracking-[0.2em] relative group",
-                activeTab === item.id ? "bg-primary text-white shadow-glow" : "text-muted-foreground hover:text-primary hover:bg-white/5"
-              )}
-            >
-              <item.icon size={20} className={cn("sm:w-[22px] sm:h-[22px] transition-transform group-hover:scale-110", activeTab === item.id && "scale-110")} />
-              <span className="hidden sm:inline line-clamp-1">{item.label}</span>
-              {activeTab === item.id && (
-                <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-4 h-1 bg-white rounded-full blur-[2px]" />
-              )}
-            </button>
-          )
-        ))}
+            )
+          ))}
+        </div>
       </nav>
 
       {/* Modal: New Deck */}
       {showNewDeckModal && (
-        <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-xl flex items-center justify-center p-8">
-          <motion.div initial={{ scale: 0.9, opacity: 0, y: 30 }} animate={{ scale: 1, opacity: 1, y: 0 }} className="w-full max-w-lg bg-card rounded-[4rem] p-12 shadow-neumorphic border border-white/5 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
-            
-            <div className="flex justify-between items-center mb-12 relative z-10">
-              <div className="space-y-1">
-                <h2 className="text-4xl font-serif font-black tracking-tight leading-none">New Ritual</h2>
-                <p className="text-[10px] font-black tracking-[0.2em] uppercase text-muted-foreground/30">Define a new neural collection</p>
+        <div className="fixed inset-0 z-[110] bg-black/20 backdrop-blur-md flex items-center justify-center p-6">
+          <motion.div initial={{ scale: 0.95, opacity: 0, y: 10 }} animate={{ scale: 1, opacity: 1, y: 0 }} className="w-full max-w-[400px] bg-card rounded-[--radius-lg] p-8 shadow-md border border-border relative">
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h2 className="text-[20px] font-serif font-normal leading-none mb-1">New Ritual</h2>
+                <p className="text-[11px] text-muted">Initialize a cognitive domain</p>
               </div>
-              <button 
-                onClick={() => setShowNewDeckModal(false)} 
-                className="w-12 h-12 rounded-[1.2rem] bg-white/5 flex items-center justify-center font-bold text-muted-foreground hover:text-rose-500 transition-colors border border-white/5"
-              >
-                ✕
-              </button>
+              <button onClick={() => setShowNewDeckModal(false)} className="text-muted hover:text-foreground">✕</button>
             </div>
 
-            <div className="space-y-10 mb-12 relative z-10">
-              <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/20 ml-2 block italic">Conceptual Title</label>
+            <div className="space-y-5 mb-8">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-muted uppercase tracking-tight ml-1">Domain Title</label>
                 <input 
                   value={newDeck.name}
                   onChange={(e) => setNewDeck({...newDeck, name: e.target.value})}
-                  className="w-full h-20 bg-white/5 shadow-neumorphic-inset rounded-[1.8rem] px-8 text-lg font-bold focus:ring-8 focus:ring-primary/5 outline-none border border-transparent focus:border-primary/20 transition-all text-white placeholder:text-muted-foreground/20" 
+                  className="field py-4" 
                   placeholder="e.g. Cognitive Psychology" 
                 />
               </div>
-              <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/20 ml-2 block italic">Ritual Objective</label>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-muted uppercase tracking-tight ml-1">Objective</label>
                 <textarea 
                   value={newDeck.description}
                   onChange={(e) => setNewDeck({...newDeck, description: e.target.value})}
-                  className="w-full h-40 bg-white/5 shadow-neumorphic-inset rounded-[2rem] p-8 text-sm font-semibold focus:ring-8 focus:ring-primary/5 outline-none resize-none leading-relaxed border border-transparent focus:border-primary/20 transition-all text-white placeholder:text-muted-foreground/20" 
-                  placeholder="Define the scope and deep context of this domain to guide neural associations..." 
+                  className="field min-h-[100px] resize-none leading-relaxed" 
+                  placeholder="Define the scope and context..." 
                 />
               </div>
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/20 ml-2 block italic">Domain</label>
-                  <div className="relative group">
-                    <select 
-                      value={(newDeck as any).category || 'General'}
-                      onChange={(e) => setNewDeck({...newDeck, category: e.target.value} as any)}
-                      className="w-full h-16 bg-white/5 shadow-neumorphic-inset rounded-[1.5rem] px-6 text-xs font-black uppercase tracking-widest outline-none appearance-none border border-transparent focus:border-primary/20 transition-all text-white"
-                    >
-                      {["General", "Science", "Languages", "Medical", "Tech", "Arts", "Business"].map(c => (
-                        <option key={c} value={c} className="bg-background text-foreground">{c.toUpperCase()}</option>
-                      ))}
-                    </select>
-                    <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground/40">
-                      <ChevronRight size={14} className="rotate-90" />
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/20 ml-2 block italic">Visibility</label>
-                  <button 
-                    onClick={() => setNewDeck({...newDeck, is_public: !(newDeck as any).is_public} as any)}
-                    className={cn(
-                      "w-full h-16 rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] transition-all border shadow-neumorphic active:scale-95",
-                      (newDeck as any).is_public ? "bg-accent/10 text-accent border-accent/20 shadow-glow" : "bg-white/5 text-muted-foreground border-white/5"
-                    )}
-                  >
-                    {(newDeck as any).is_public ? "Universal" : "Personal"}
-                  </button>
-                </div>
-              </div>
             </div>
+            
             <button 
               onClick={handleCreateDeck}
               disabled={!newDeck.name}
-              className="w-full h-20 bg-primary text-white font-black rounded-[2.5rem] shadow-glow active:scale-95 transition-all text-sm uppercase tracking-[0.3em] disabled:opacity-20"
+              className="btn-primary w-full py-4 text-[13px] font-bold uppercase tracking-widest disabled:opacity-40"
             >
-              Synchronize Domain
+              Start Domain
             </button>
           </motion.div>
         </div>

@@ -1,34 +1,37 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-sans: 'DM Sans', sans-serif;
   --font-serif: 'DM Serif Display', serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  --color-primary: #8B5CF6; /* Vibrant Purple */
-  --color-primary-foreground: #FFFFFF;
-  
-  --color-secondary: #EC4899; /* Vibrant Pink */
-  --color-secondary-foreground: #FFFFFF;
+  --color-primary: #7c6fcd;   /* Main purple — buttons, highlights */
+  --color-primary-light: #eeebf8;   /* Tinted background for active states */
+  --color-primary-foreground: #ffffff;   /* Text on primary */
 
-  --color-accent: #10B981; /* Vibrant Emerald */
-  --color-accent-foreground: #FFFFFF;
+  --color-secondary: #f0ede8;   /* Subtle fills, toggles */
+  --color-secondary-foreground: #2a2826;
 
-  --color-background: #0B0E14; /* Deeper Dark Background */
-  --color-foreground: #F8FAFC;
+  --color-accent: #2d8a5a;   /* Strong recall — green */
+  --color-accent-foreground: #ffffff;
 
-  --color-card: #151921; /* Dark Card Background */
-  --color-card-foreground: #E2E8F0;
+  --color-background: #f7f5f2;   /* Page background */
+  --color-foreground: #2a2826;   /* Primary text */
 
-  --color-border: #1E293B;
-  
-  --radius-xl: 1.5rem;
-  --radius-2xl: 2rem;
-  --radius-3xl: 3.5rem;
+  --color-card: #ffffff;   /* Card background */
+  --color-card-foreground: #2a2826;
 
-  --shadow-neumorphic: 10px 10px 20px rgba(0, 0, 0, 0.4), -5px -5px 15px rgba(255, 255, 255, 0.02);
-  --shadow-neumorphic-inset: inset 6px 6px 12px rgba(0, 0, 0, 0.4), inset -4px -4px 10px rgba(255, 255, 255, 0.02);
-  --shadow-glow: 0 0 30px rgba(139, 92, 246, 0.15);
+  --color-border: #e8e4de;   /* Card / divider borders */
+  --color-muted: #8a8480;   /* Secondary text */
+  --color-muted-bg: #ece9e3;   /* Input backgrounds */
+
+  --radius-xl: 18px;
+  --radius-lg: 24px;
+  --radius-sm: 10px;
+
+  --shadow-sm: 0 2px 12px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.07), 0 2px 6px rgba(0,0,0,0.06);
+  --shadow-glow: 0 4px 14px rgba(124,111,205,0.32);
 
   --animate-blob: blob 10s infinite;
   --animate-breathe: breathe 4s ease-in-out infinite;
@@ -36,25 +39,39 @@
 
 @layer base {
   body {
-    @apply bg-background text-foreground antialiased selection:bg-primary/30 selection:text-primary;
+    @apply bg-background text-foreground antialiased selection:bg-primary/30 selection:text-primary font-sans;
   }
 }
 
 @layer components {
-  .glass-card {
-    @apply bg-card/60 backdrop-blur-xl border border-white/5 shadow-2xl;
+  .card {
+    @apply bg-card rounded-[--radius-xl] p-5 border border-border shadow-[--shadow-sm];
   }
   
-  .neo-btn {
-    @apply bg-card shadow-neumorphic active:shadow-neumorphic-inset active:scale-95 transition-all duration-300 rounded-[2rem];
-  }
-  
-  .neo-input {
-    @apply bg-card shadow-neumorphic-inset border-none px-6 py-5 rounded-[2rem] outline-none focus:ring-2 focus:ring-primary/40 transition-all;
+  .card-sm {
+    @apply bg-card rounded-[--radius-xl] p-4 border border-border shadow-[--shadow-sm];
   }
 
-  .stat-card {
-    @apply p-6 rounded-[2.5rem] bg-card border border-white/5 shadow-neumorphic transition-all hover:shadow-glow;
+  .field {
+    @apply w-full bg-muted-bg border border-transparent rounded-[--radius-sm] px-4 py-3 text-[13px] font-sans text-foreground outline-none focus:border-primary transition-colors placeholder:text-muted;
+  }
+
+  .anchor-card {
+    @apply bg-primary rounded-[--radius-lg] p-7 text-center mb-4 relative overflow-hidden;
+  }
+
+  .anchor-card::before {
+    content: '';
+    @apply absolute inset-0;
+    background: radial-gradient(circle at 70% 30%, rgba(255,255,255,0.12), transparent 60%);
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-full font-medium cursor-pointer transition-all active:scale-[0.97] hover:opacity-90;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-full font-medium cursor-pointer transition-all active:scale-[0.97] hover:opacity-90 bg-primary text-primary-foreground shadow-[--shadow-glow];
   }
 }
 
