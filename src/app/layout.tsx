@@ -25,11 +25,9 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="antialiased min-h-screen bg-slate-50/50 flex justify-center">
+      <body className="font-sans antialiased">
         <AuthProvider>
-          <main className="w-full max-w-4xl min-h-screen bg-background md:my-8 md:rounded-[3rem] md:shadow-2xl md:border border-border relative overflow-hidden flex flex-col">
-            {children}
-          </main>
+          {children}
         </AuthProvider>
       </body>
     </html>
