@@ -1,69 +1,67 @@
 @import "tailwindcss";
 
-:root {
-  --background: oklch(0.98 0.01 250);
-  --foreground: oklch(0.2 0.02 250);
-  --primary: oklch(0.6 0.1 240);
-  --primary-light: oklch(0.85 0.05 240);
-  --primary-foreground: oklch(0.98 0.01 240);
-  --card: oklch(0.99 0.01 250);
-  --card-foreground: oklch(0.2 0.02 250);
-  --muted: oklch(0.93 0.01 250);
-  --muted-foreground: oklch(0.5 0.02 250);
-  --border: oklch(0.93 0.01 250);
+@theme {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-serif: 'DM Serif Display', serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --color-primary: #8B5CF6; /* Vibrant Purple */
+  --color-primary-foreground: #FFFFFF;
   
-  --shadow-neumorphic: 8px 8px 16px oklch(0.9 0.02 250), -8px -8px 16px oklch(1 0 0);
-  --shadow-neumorphic-inset: inset 4px 4px 8px oklch(0.9 0.02 250), inset -4px -4px 8px oklch(1 0 0);
-  --radius: 1.5rem;
+  --color-secondary: #EC4899; /* Vibrant Pink */
+  --color-secondary-foreground: #FFFFFF;
+
+  --color-accent: #10B981; /* Vibrant Emerald */
+  --color-accent-foreground: #FFFFFF;
+
+  --color-background: #F8FAFC;
+  --color-foreground: #0F172A;
+
+  --color-card: #FFFFFF;
+  --color-card-foreground: #1E293B;
+
+  --color-border: #E2E8F0;
+  
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-3xl: 3rem;
+
+  --shadow-neumorphic: 8px 8px 16px rgba(0, 0, 0, 0.05), -8px -8px 16px #ffffff;
+  --shadow-neumorphic-inset: inset 6px 6px 12px rgba(0, 0, 0, 0.05), inset -6px -6px 12px #ffffff;
+  --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.3);
+
+  --animate-blob: blob 7s infinite;
+  --animate-breathe: breathe 4s ease-in-out infinite;
 }
 
-@theme {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --color-primary-light: var(--primary-light);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-border: var(--border);
-  --shadow-neumorphic: var(--shadow-neumorphic);
-  --shadow-neumorphic-inset: var(--shadow-neumorphic-inset);
-  
-  --font-sans: "Inter", "Geist", "DM Sans", system-ui, sans-serif;
-  --font-serif: "DM Serif Display", serif;
+@layer base {
+  body {
+    @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary;
+  }
+}
 
-  --animate-blob: blob 10s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
-  --animate-breathe: breathe 4s infinite ease-in-out;
+@layer components {
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-md border border-white/40 shadow-xl;
+  }
+  
+  .neo-btn {
+    @apply bg-white shadow-neumorphic active:shadow-neumorphic-inset transition-all duration-200 rounded-2xl;
+  }
+  
+  .neo-input {
+    @apply bg-white shadow-neumorphic-inset border-none px-6 py-4 rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 transition-all;
+  }
 }
 
 @keyframes blob {
-  0% { transform: translate(0px, 0px) scale(1) rotate(0deg); opacity: 0.15; }
-  33% { transform: translate(30px, -50px) scale(1.1) rotate(45deg); opacity: 0.2; }
-  66% { transform: translate(-20px, 20px) scale(0.9) rotate(-10deg); opacity: 0.1; }
-  100% { transform: translate(0px, 0px) scale(1) rotate(0deg); opacity: 0.15; }
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
 }
 
 @keyframes breathe {
   0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.02); opacity: 0.8; }
-}
-
-body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-}
-
-.font-display {
-  font-family: var(--font-serif);
-}
-
-.glass {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  50% { transform: scale(1.05); opacity: 0.8; }
 }
