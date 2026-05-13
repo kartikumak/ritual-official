@@ -27,7 +27,16 @@ export default function UserProfilePage() {
   const fetchProfile = async () => {
     const { data, error } = await supabase.from('profiles').select('*').eq('id', targetId).single();
     if (data) {
-      setProfile(data);
+      const { count: momentsCount } = await supabase.from('learning_posts').select('*', { count: 'exact', head: true }).eq('user_id', targetId);
+      const { count: followersCount } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', targetId);
+      const { count: followingCount } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', targetId);
+
+      setProfile({
+        ...data,
+        momentsCount: momentsCount || 0,
+        followersCount: followersCount || 0,
+        followingCount: followingCount || 0,
+      });
     }
     
     // Check if following
@@ -45,9 +54,11 @@ export default function UserProfilePage() {
     if (isFollowing) {
       await supabase.from('follows').delete().eq('follower_id', user.id).eq('following_id', targetId);
       setIsFollowing(false);
+      setProfile((prev: any) => ({ ...prev, followersCount: Math.max(0, (prev.followersCount || 0) - 1) }));
     } else {
       await supabase.from('follows').insert({ follower_id: user.id, following_id: targetId });
       setIsFollowing(true);
+      setProfile((prev: any) => ({ ...prev, followersCount: (prev.followersCount || 0) + 1 }));
     }
     setActionLoading(false);
   };
@@ -110,27 +121,25 @@ export default function UserProfilePage() {
                    {profile.native_language && (
                      <div className="badge-primary bg-primary/5 text-primary border-primary/10">Native: {profile.native_language}</div>
                    )}
-                   {profile.learning_languages && profile.learning_languages.map((l: string) => (
-                     <div key={l} className="badge-primary bg-emerald-500/10 text-emerald-600 border-emerald-500/20">Learning: {l}</div>
+                   {profile.learning_languages && typeof profile.learning_languages === 'string' && profile.learning_languages.split(',').map((l: string, i: number) => l.trim() && (
+                     <div key={i} className="badge-primary bg-emerald-500/10 text-emerald-600 border-emerald-500/20">Learning: {l.trim()}</div>
                    ))}
                 </div>
               </div>
            </div>
            
-           <div className="grid grid-cols-2 gap-4">
-             <div className="card-sm p-6 text-center shadow-soft">
-               <div className="w-10 h-10 rounded-xl bg-accent-green/10 flex items-center justify-center text-accent-green mx-auto mb-3">
-                 <Activity size={18} />
-               </div>
-               <p className="text-xs font-bold uppercase text-muted mb-1 tracking-wider">Total Rites</p>
-               <p className="text-2xl font-bold text-foreground">{profile.total_rituals || 0}</p>
+           <div className="grid grid-cols-3 gap-2 text-center shadow-soft p-4 rounded-2xl bg-card border border-border/50 divide-x divide-border/50">
+             <div>
+               <p className="text-xl font-bold text-foreground mb-1">{profile.momentsCount || 0}</p>
+               <p className="text-[11px] font-bold uppercase text-muted tracking-wider">Moments</p>
              </div>
-             <div className="card-sm p-6 text-center shadow-soft">
-               <div className="w-10 h-10 rounded-xl bg-accent-yellow/10 flex items-center justify-center text-accent-yellow mx-auto mb-3">
-                 <Award size={18} />
-               </div>
-               <p className="text-xs font-bold uppercase text-muted mb-1 tracking-wider">Mastery Lvl</p>
-               <p className="text-2xl font-bold text-foreground">{Math.floor((profile.total_rituals || 0) / 10) + 1}</p>
+             <div>
+               <p className="text-xl font-bold text-foreground mb-1">{profile.followingCount || 0}</p>
+               <p className="text-[11px] font-bold uppercase text-muted tracking-wider">Following</p>
+             </div>
+             <div>
+               <p className="text-xl font-bold text-foreground mb-1">{profile.followersCount || 0}</p>
+               <p className="text-[11px] font-bold uppercase text-muted tracking-wider">Followers</p>
              </div>
            </div>
 

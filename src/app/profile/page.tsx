@@ -8,8 +8,6 @@ import { getSupabase } from "@/src/lib/supabase";
 import { useRouter } from "next/navigation";
 import { getInitials, cn } from "@/src/lib/utils";
 
-import { ThemeToggle } from "@/src/components/ThemeToggle";
-
 export default function ProfilePage() {
   const { user, signOut, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<any>(null);
@@ -41,7 +39,16 @@ export default function ProfilePage() {
   const fetchProfile = async () => {
     const { data } = await supabase.from('profiles').select('*').eq('id', user?.id).single();
     if (data) {
-      setProfile(data);
+      const { count: momentsCount } = await supabase.from('learning_posts').select('*', { count: 'exact', head: true }).eq('user_id', user?.id);
+      const { count: followersCount } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', user?.id);
+      const { count: followingCount } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', user?.id);
+
+      setProfile({
+        ...data,
+        momentsCount: momentsCount || 0,
+        followersCount: followersCount || 0,
+        followingCount: followingCount || 0,
+      });
       setFormData({
         username: data.username || '',
         display_name: data.display_name || data.name || '',
@@ -58,10 +65,41 @@ export default function ProfilePage() {
     setLoading(false);
   };
 
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert("Image should be less than 2MB");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, avatar_url: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
+    
+    if (formData.username?.trim()) {
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', formData.username.trim().toLowerCase())
+        .neq('id', user?.id)
+        .maybeSingle();
+        
+      if (existingUser) {
+        alert("Username is already taken. Please choose another one.");
+        setIsSaving(false);
+        return;
+      }
+    }
+
     const { error } = await supabase.from('profiles').update({
-      username: formData.username,
+      username: formData.username?.trim().toLowerCase() || null,
       display_name: formData.display_name,
       name: formData.display_name,
       bio: formData.bio,
@@ -93,27 +131,25 @@ export default function ProfilePage() {
           <ChevronLeft size={28} />
         </button>
         <div className="flex items-center gap-4 text-foreground">
-          <ThemeToggle className="w-10 h-10 shadow-none border-none bg-transparent" />
-          <button className="p-2"><Save size={24} className="opacity-0" /></button> {/* spacer */}
           <button className="p-2 absolute right-16">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
           </button>
           <button className="p-2" onClick={signOut}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <LogOut size={24} />
           </button>
         </div>
       </header>
 
       <div className="max-w-[420px] mx-auto px-5">
         {/* Profile Info */}
-        <div className="flex items-center gap-5 mb-8 mt-4">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 mb-8 mt-4 text-center sm:text-left">
           <div className="relative">
-            <div className="w-[84px] h-[84px] rounded-full p-1 bg-gradient-to-tr from-primary to-accent-teal">
+            <div className="w-[100px] h-[100px] rounded-full p-1 bg-gradient-to-tr from-primary to-accent-teal mx-auto sm:mx-0">
               <div className="w-full h-full rounded-full border-2 border-background overflow-hidden bg-secondary">
                 {formData.avatar_url ? (
                   <img src={formData.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-primary">
+                  <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-primary">
                     {getInitials(formData.display_name || user?.email || "?")}
                   </div>
                 )}
@@ -121,43 +157,53 @@ export default function ProfilePage() {
             </div>
           </div>
           
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-[22px] font-bold text-foreground">{formData.display_name || "Unnamed"}</h1>
+          <div className="flex-1 space-y-2">
+            <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
+              <h1 className="text-2xl font-bold text-foreground">{formData.display_name || "Unnamed"}</h1>
             </div>
-            <div className="flex items-center gap-2 text-muted text-sm mb-3">
+            <div className="text-muted text-sm flex items-center justify-center sm:justify-start gap-2 mb-2">
               <span>@{formData.username || 'user'}</span>
-              <button className="hover:text-foreground"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+              {formData.country && <span>· {formData.country}</span>}
             </div>
+            
+            {formData.bio && (
+              <p className="text-sm mt-3 leading-relaxed max-w-sm mb-3">
+                {formData.bio}
+              </p>
+            )}
+
+            <div className="flex flex-wrap gap-2 mt-2 justify-center sm:justify-start mb-4">
+               {formData.native_language && (
+                 <div className="px-2 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider bg-primary/10 text-primary">Native: {formData.native_language}</div>
+               )}
+               {formData.learning_languages && formData.learning_languages.split(',').map((l, i) => l.trim() && (
+                 <div key={i} className="px-2 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600">Learning: {l.trim()}</div>
+               ))}
+            </div>
+
             <button 
               onClick={() => setIsEditing(!isEditing)}
-              className="bg-primary text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 w-max pr-4"
+              className="bg-primary text-white text-xs font-bold px-4 py-2 rounded-full flex mx-auto sm:mx-0 items-center gap-2 mt-2"
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-              75% Complete
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 ml-1"></span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              Edit Profile
             </button>
           </div>
-          <ChevronLeft size={24} className="rotate-180 text-muted" />
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-4 gap-2 text-center mb-8 divide-x divide-border/50">
+        <div className="grid grid-cols-3 gap-2 text-center mb-8 divide-x divide-border/50">
           <div>
-            <p className="text-[20px] font-bold text-foreground mb-1">{profile?.total_rituals || 2}</p>
+            <p className="text-[20px] font-bold text-foreground mb-1">{profile?.momentsCount || 0}</p>
             <p className="text-xs text-muted font-medium">Moments</p>
           </div>
           <div>
-            <p className="text-[20px] font-bold text-foreground mb-1">16</p>
+            <p className="text-[20px] font-bold text-foreground mb-1">{profile?.followingCount || 0}</p>
             <p className="text-xs text-muted font-medium">Following</p>
           </div>
           <div>
-            <p className="text-[20px] font-bold text-foreground mb-1">20</p>
+            <p className="text-[20px] font-bold text-foreground mb-1">{profile?.followersCount || 0}</p>
             <p className="text-xs text-muted font-medium">Followers</p>
-          </div>
-          <div>
-            <p className="text-[20px] font-bold text-foreground mb-1">158</p>
-            <p className="text-xs text-muted font-medium">Visitors</p>
           </div>
         </div>
 
@@ -171,6 +217,22 @@ export default function ProfilePage() {
                 </div>
                 {/* Configuration Forms */}
                 <div className="space-y-4">
+                  <div className="flex justify-center mb-6">
+                    <label className="relative cursor-pointer group">
+                      <div className="w-24 h-24 rounded-full bg-secondary border-2 border-primary flex items-center justify-center overflow-hidden">
+                        {formData.avatar_url ? (
+                          <img src={formData.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="text-3xl font-bold text-primary">{getInitials(formData.display_name || user?.email || "?")}</div>
+                        )}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                          <Camera size={24} />
+                        </div>
+                      </div>
+                      <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+                    </label>
+                  </div>
+
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-bold text-muted uppercase tracking-wider px-1">Display Name</label>
                     <input 
@@ -217,6 +279,15 @@ export default function ProfilePage() {
                         className="field py-3.5"
                       />
                     </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-muted uppercase tracking-wider px-1">Learning Languages</label>
+                    <input 
+                      value={formData.learning_languages}
+                      onChange={e => setFormData({...formData, learning_languages: e.target.value})}
+                      placeholder="e.g. Spanish, Japanese (comma separated)"
+                      className="field py-3.5"
+                    />
                   </div>
                 </div>
 
