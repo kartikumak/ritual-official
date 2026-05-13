@@ -20,11 +20,6 @@ interface Post {
     display_name: string;
     avatar_url: string | null;
   };
-  metrics?: {
-    likes: number;
-    comments: number;
-    hasLiked: boolean;
-  };
 }
 
 export default function GlobalPosts({ userId }: { userId: string }) {
@@ -54,15 +49,7 @@ export default function GlobalPosts({ userId }: { userId: string }) {
     }
 
     if (postsData) {
-      const formattedPosts = postsData.map(p => ({
-        ...p,
-        metrics: {
-          likes: 0,
-          comments: 0,
-          hasLiked: false
-        }
-      })) as Post[];
-      setPosts(formattedPosts);
+      setPosts(postsData as Post[]);
     }
     setLoading(false);
   };
@@ -76,15 +63,7 @@ export default function GlobalPosts({ userId }: { userId: string }) {
       .range(currentLength, currentLength + 19);
 
     if (postsData && postsData.length > 0) {
-       const formattedPosts = postsData.map(p => ({
-        ...p,
-        metrics: {
-          likes: 0,
-          comments: 0,
-          hasLiked: false
-        }
-      })) as Post[];
-      setPosts(prev => [...prev, ...formattedPosts]);
+      setPosts(prev => [...prev, ...postsData as Post[]]);
     }
   };
 
@@ -112,39 +91,10 @@ export default function GlobalPosts({ userId }: { userId: string }) {
   return (
     <div className="max-w-2xl mx-auto space-y-4 pb-24">
       {/* Moments Top Header */}
-      <div className="sticky top-0 z-40 bg-background/90 backdrop-blur-md pb-2 pt-2 mb-2 space-y-3">
+      <div className="sticky top-0 z-40 bg-background/90 backdrop-blur-md pb-4 pt-2 mb-2 space-y-3">
         <div className="flex items-center gap-3">
-          <div className="flex items-center flex-1 bg-secondary rounded-full px-4 py-2 opacity-80 border-border border">
-            <Search size={18} className="text-muted mr-2" />
-            <input type="text" placeholder="Search Moments" className="bg-transparent border-none outline-none text-sm w-full placeholder:text-muted" />
-          </div>
-          <button className="relative p-2 text-muted hover:text-foreground transition-colors">
-            <Bell size={24} />
-            <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-background"></span>
-          </button>
-          <button className="p-2 text-muted hover:text-foreground transition-colors">
-            <Edit3 size={24} />
-          </button>
-        </div>
-        
-        {/* Tabs */}
-        <div className="flex items-center gap-6 overflow-x-auto no-scrollbar pb-2">
-          {['Recent', 'For You', 'Help', 'Nearby', 'Search'].map((tab) => (
-             <button 
-               key={tab}
-               onClick={() => setActiveTab(tab)}
-               className={cn(
-                 "text-[15px] font-bold whitespace-nowrap pb-2 border-b-[3px] transition-all -mb-2",
-                 activeTab === tab ? "text-foreground border-foreground" : "text-muted border-transparent"
-               )}
-             >
-               {tab}
-             </button>
-          ))}
+          <h2 className="text-xl font-bold px-2">Moments</h2>
           <div className="flex-1" />
-          <button className="text-muted hover:text-foreground pb-2 -mb-2">
-            <Settings2 size={20} />
-          </button>
         </div>
       </div>
 
@@ -223,16 +173,9 @@ export default function GlobalPosts({ userId }: { userId: string }) {
                                    {post.profiles?.display_name || post.profiles?.username || 'Explorer'}
                                  </span>
                                </Link>
-                               <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-black italic px-1.5 py-0.5 rounded-xl uppercase tracking-wider">VIP</span>
                              </div>
                              <div className="flex items-center gap-1.5 mt-0.5">
-                               <div className="flex items-center text-[10px] font-bold text-muted uppercase tracking-wider">
-                                 <span className="text-primary border-b-[1.5px] border-primary pb-[1px]">JP</span>
-                                 <RefreshCw size={10} className="mx-1 opacity-50" />
-                                 <span>EN</span>
-                                 <span className="mx-1.5 opacity-30">•</span>
-                                 <span>HI</span>
-                               </div>
+                               <span className="text-[11px] text-muted">@{post.profiles?.username || 'user'}</span>
                              </div>
                            </div>
                            <div className="flex items-center gap-2">
@@ -253,33 +196,6 @@ export default function GlobalPosts({ userId }: { userId: string }) {
                        
                        <div className="mt-3 text-[15px] leading-relaxed whitespace-pre-wrap text-foreground/90 font-medium">
                          {post.content}
-                       </div>
-
-                       <div className="mt-4 flex items-center justify-between text-muted border-t border-border/50 pt-3">
-                         <button className={cn("flex items-center gap-2 hover:text-primary transition-colors group", post.metrics?.hasLiked && "text-primary")}>
-                           <div className="p-1 rounded-full text-muted group-hover:text-primary transition-colors">
-                             <Heart size={20} className={cn(post.metrics?.hasLiked && "fill-primary")} />
-                           </div>
-                           {post.metrics?.likes && post.metrics.likes > 0 ? <span className="text-sm font-bold">{post.metrics?.likes}</span> : null}
-                         </button>
-                         <button className="flex items-center gap-2 hover:text-primary transition-colors group">
-                           <div className="p-1 rounded-full text-muted group-hover:text-primary transition-colors">
-                             <MessageSquare size={20} />
-                           </div>
-                           {post.metrics?.comments && post.metrics.comments > 0 ? <span className="text-sm font-bold">{post.metrics?.comments}</span> : null}
-                         </button>
-                         <button className="flex items-center gap-2 hover:text-primary transition-colors group">
-                           <div className="p-1 rounded-full text-muted group-hover:text-primary transition-colors flex items-center gap-1 font-bold text-xs uppercase tracking-wider">
-                             <span>A</span>
-                             <RefreshCw size={14} />
-                             <span>文</span>
-                           </div>
-                         </button>
-                         <button className="flex items-center gap-2 hover:text-primary transition-colors group">
-                           <div className="p-1 rounded-full text-muted group-hover:text-primary transition-colors">
-                             <Send size={20} />
-                           </div>
-                         </button>
                        </div>
                      </div>
                    </div>

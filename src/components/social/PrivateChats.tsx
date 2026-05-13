@@ -195,7 +195,6 @@ export default function PrivateChats({ userId }: { userId: string }) {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 truncate">
                       <span className="font-bold text-[15px] tracking-tight truncate">{chat.other_user?.display_name || chat.other_user?.username}</span>
-                      <span className="shrink-0 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-black italic px-1.5 py-0.5 rounded-sm uppercase tracking-wider">VIP</span>
                     </div>
                     <span className="text-[11px] font-medium text-muted shrink-0 whitespace-nowrap">{formatDistanceToNow(new Date(chat.updated_at), { addSuffix: false })}</span>
                   </div>
