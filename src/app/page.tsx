@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Star, Plus, Settings as SettingsIcon, LayoutGrid, LogOut, Download, Upload, Trash2, AlertCircle, TrendingUp, ShoppingBag, User, ChevronRight, Search, Zap } from "lucide-react";
+import { BookOpen, Star, Plus, Settings as SettingsIcon, LayoutGrid, LogOut, Download, Upload, Trash2, AlertCircle, TrendingUp, ShoppingBag, User, ChevronRight, Search, Zap, CloudLightning } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { cn, getInitials } from "@/src/lib/utils";
 import { useAuth } from "@/src/context/AuthContext";
@@ -9,6 +9,7 @@ import { getSupabase } from "@/src/lib/supabase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, Cell } from 'recharts';
+import SocialHub from "@/src/components/social/SocialHub";
 
 export default function Home() {
   const { user, signOut, loading: authLoading } = useAuth();
@@ -497,6 +498,11 @@ export default function Home() {
               {renderCreateAnchor()}
             </motion.div>
           )}
+          {activeTab === 'social' && (
+            <motion.div key="social">
+              <SocialHub userId={user?.id || ''} />
+            </motion.div>
+          )}
         </AnimatePresence>
       </main>
 
@@ -510,6 +516,7 @@ export default function Home() {
               else setActiveTab('decks');
             }},
             { id: 'create', icon: Plus, label: 'Create' },
+            { id: 'social', icon: CloudLightning, label: 'Pulse' },
             { id: 'profile', icon: SettingsIcon, label: 'Settings', href: '/profile' },
           ].map((item) => (
             item.href ? (

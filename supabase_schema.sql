@@ -83,6 +83,46 @@ create table if not exists public.sessions (
   ended_at timestamp with time zone
 );
 
+-- CHAT MESSAGES
+create table if not exists public.chat_messages (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  content text not null,
+  reply_to_id uuid references public.chat_messages(id) on delete set null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- RECALL ROOMS
+create table if not exists public.recall_rooms (
+  id uuid default uuid_generate_v4() primary key,
+  creator_id uuid references public.profiles(id) on delete cascade not null,
+  title text not null,
+  category text not null,
+  is_active boolean default true,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- ROOM PARTICIPANTS
+create table if not exists public.room_participants (
+  id uuid default uuid_generate_v4() primary key,
+  room_id uuid references public.recall_rooms(id) on delete cascade not null,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  is_muted boolean default false,
+  joined_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(room_id, user_id)
+);
+
+-- VOICE POSTS
+create table if not exists public.voice_posts (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  title text not null,
+  topic text not null,
+  description text,
+  audio_url text not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
 -- Migration logic for existing tables
 do $$
 begin
@@ -102,6 +142,10 @@ alter table public.anchors enable row level security;
 alter table public.anchor_progress enable row level security;
 alter table public.review_logs enable row level security;
 alter table public.sessions enable row level security;
+alter table public.chat_messages enable row level security;
+alter table public.recall_rooms enable row level security;
+alter table public.room_participants enable row level security;
+alter table public.voice_posts enable row level security;
 
 -- Policies (Using DO blocks to avoid errors if they already exist)
 do $$
@@ -147,6 +191,50 @@ begin
 
   if not exists (select 1 from pg_policies where tablename = 'sessions' and policyname = 'Users can manage sessions') then
     create policy "Users can manage sessions" on public.sessions for all using (auth.uid() = user_id);
+  end if;
+
+  -- Chat Messages
+  if not exists (select 1 from pg_policies where tablename = 'chat_messages' and policyname = 'Anyone can view chat') then
+    create policy "Anyone can view chat" on public.chat_messages for select using (true);
+  end if;
+  if not exists (select 1 from pg_policies where tablename = 'chat_messages' and policyname = 'Authenticated users can send messages') then
+    create policy "Authenticated users can send messages" on public.chat_messages for insert with check (auth.uid() = user_id);
+  end if;
+  if not exists (select 1 from pg_policies where tablename = 'chat_messages' and policyname = 'Users can delete their own messages') then
+    create policy "Users can delete their own messages" on public.chat_messages for delete using (auth.uid() = user_id);
+  end if;
+
+  -- Recall Rooms
+  if not exists (select 1 from pg_policies where tablename = 'recall_rooms' and policyname = 'Anyone can view active rooms') then
+    create policy "Anyone can view active rooms" on public.recall_rooms for select using (is_active = true);
+  end if;
+  if not exists (select 1 from pg_policies where tablename = 'recall_rooms' and policyname = 'Authenticated users can create rooms') then
+    create policy "Authenticated users can create rooms" on public.recall_rooms for insert with check (auth.uid() = creator_id);
+  end if;
+  if not exists (select 1 from pg_policies where tablename = 'recall_rooms' and policyname = 'Creators can manage rooms') then
+    create policy "Creators can manage rooms" on public.recall_rooms for all using (auth.uid() = creator_id);
+  end if;
+
+  -- Room Participants
+  if not exists (select 1 from pg_policies where tablename = 'room_participants' and policyname = 'Anyone can view participants') then
+    create policy "Anyone can view participants" on public.room_participants for select using (true);
+  end if;
+  if not exists (select 1 from pg_policies where tablename = 'room_participants' and policyname = 'Users can join rooms') then
+    create policy "Users can join rooms" on public.room_participants for insert with check (auth.uid() = user_id);
+  end if;
+  if not exists (select 1 from pg_policies where tablename = 'room_participants' and policyname = 'Users can manage their own participation') then
+    create policy "Users can manage their own participation" on public.room_participants for all using (auth.uid() = user_id);
+  end if;
+
+  -- Voice Posts
+  if not exists (select 1 from pg_policies where tablename = 'voice_posts' and policyname = 'Anyone can view voice posts') then
+    create policy "Anyone can view voice posts" on public.voice_posts for select using (true);
+  end if;
+  if not exists (select 1 from pg_policies where tablename = 'voice_posts' and policyname = 'Authenticated users can create voice posts') then
+    create policy "Authenticated users can create voice posts" on public.voice_posts for insert with check (auth.uid() = user_id);
+  end if;
+  if not exists (select 1 from pg_policies where tablename = 'voice_posts' and policyname = 'Users can delete their own voice posts') then
+    create policy "Users can delete their own voice posts" on public.voice_posts for delete using (auth.uid() = user_id);
   end if;
 end
 $$;
