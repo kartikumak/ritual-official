@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { getSupabase } from '@/src/lib/supabase';
 import { motion, AnimatePresence } from 'motion/react';
-import { MessageSquare, Heart, RefreshCw, Send, Trash2, Mic, Image as ImageIcon } from 'lucide-react';
+import { MessageSquare, Heart, RefreshCw, Send, Trash2, Mic, Image as ImageIcon, Search, Bell, Edit3, Settings2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn, getInitials } from '@/src/lib/utils';
 import Link from 'next/link';
@@ -28,6 +28,7 @@ interface Post {
 }
 
 export default function GlobalPosts({ userId }: { userId: string }) {
+  const [activeTab, setActiveTab] = useState('Recent');
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [newPostContent, setNewPostContent] = useState('');
@@ -109,7 +110,44 @@ export default function GlobalPosts({ userId }: { userId: string }) {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 pb-24">
+    <div className="max-w-2xl mx-auto space-y-4 pb-24">
+      {/* Moments Top Header */}
+      <div className="sticky top-0 z-40 bg-background/90 backdrop-blur-md pb-2 pt-2 mb-2 space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center flex-1 bg-secondary rounded-full px-4 py-2 opacity-80 border-border border">
+            <Search size={18} className="text-muted mr-2" />
+            <input type="text" placeholder="Search Moments" className="bg-transparent border-none outline-none text-sm w-full placeholder:text-muted" />
+          </div>
+          <button className="relative p-2 text-muted hover:text-foreground transition-colors">
+            <Bell size={24} />
+            <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-background"></span>
+          </button>
+          <button className="p-2 text-muted hover:text-foreground transition-colors">
+            <Edit3 size={24} />
+          </button>
+        </div>
+        
+        {/* Tabs */}
+        <div className="flex items-center gap-6 overflow-x-auto no-scrollbar pb-2">
+          {['Recent', 'For You', 'Help', 'Nearby', 'Search'].map((tab) => (
+             <button 
+               key={tab}
+               onClick={() => setActiveTab(tab)}
+               className={cn(
+                 "text-[15px] font-bold whitespace-nowrap pb-2 border-b-[3px] transition-all -mb-2",
+                 activeTab === tab ? "text-foreground border-foreground" : "text-muted border-transparent"
+               )}
+             >
+               {tab}
+             </button>
+          ))}
+          <div className="flex-1" />
+          <button className="text-muted hover:text-foreground pb-2 -mb-2">
+            <Settings2 size={20} />
+          </button>
+        </div>
+      </div>
+
       {/* Create Post */}
       <div className="bg-card w-full animate-in fade-in slide-in-from-bottom-2 p-4 rounded-[28px] border border-border shadow-sm">
         <div className="flex gap-4 items-start">
@@ -177,53 +215,70 @@ export default function GlobalPosts({ userId }: { userId: string }) {
                      </Link>
                      <div className="flex-1 min-w-0">
                        <div className="flex items-center justify-between">
-                         <div className="flex flex-col min-w-0">
-                           <div className="flex items-center gap-2 truncate">
-                             <Link href={`/profile/${post.user_id}`}>
-                               <span className="font-bold text-[15px] hover:underline cursor-pointer tracking-tight">
-                                 {post.profiles?.display_name || post.profiles?.username || 'Explorer'}
-                               </span>
-                             </Link>
-                             {post.user_id !== userId && (
-                               <button className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full hover:bg-primary/20 transition-colors uppercase tracking-wider">
-                                 Follow
+                         <div className="flex items-start justify-between">
+                           <div className="flex flex-col min-w-0">
+                             <div className="flex items-center gap-2 truncate">
+                               <Link href={`/profile/${post.user_id}`}>
+                                 <span className="font-bold text-[15px] hover:underline cursor-pointer tracking-tight">
+                                   {post.profiles?.display_name || post.profiles?.username || 'Explorer'}
+                                 </span>
+                               </Link>
+                               <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-black italic px-1.5 py-0.5 rounded-xl uppercase tracking-wider">VIP</span>
+                             </div>
+                             <div className="flex items-center gap-1.5 mt-0.5">
+                               <div className="flex items-center text-[10px] font-bold text-muted uppercase tracking-wider">
+                                 <span className="text-primary border-b-[1.5px] border-primary pb-[1px]">JP</span>
+                                 <RefreshCw size={10} className="mx-1 opacity-50" />
+                                 <span>EN</span>
+                                 <span className="mx-1.5 opacity-30">•</span>
+                                 <span>HI</span>
+                               </div>
+                             </div>
+                           </div>
+                           <div className="flex items-center gap-2">
+                             <span className="text-[11px] font-medium text-muted shrink-0 mt-0.5">
+                               {formatDistanceToNow(new Date(post.created_at), { addSuffix: false })} ago
+                             </span>
+                             {post.user_id === userId && (
+                               <button 
+                                 onClick={() => handleDelete(post.id)}
+                                 className="text-muted hover:text-rose-500 transition-colors p-2 -mr-2 rounded-full hover:bg-rose-50"
+                               >
+                                 <Trash2 size={16} />
                                </button>
                              )}
                            </div>
-                           <div className="flex items-center gap-1.5 mt-0.5 text-muted">
-                             <span className="text-[11px] truncate">@{post.profiles?.username || 'user'}</span>
-                             <span className="text-[10px]">·</span>
-                             <span className="text-[10px] shrink-0 font-medium">
-                               {formatDistanceToNow(new Date(post.created_at), { addSuffix: false })} ago
-                             </span>
-                           </div>
                          </div>
-                         {post.user_id === userId && (
-                           <button 
-                             onClick={() => handleDelete(post.id)}
-                             className="text-muted hover:text-rose-500 transition-colors p-2 -mr-2 rounded-full hover:bg-rose-50"
-                           >
-                             <Trash2 size={16} />
-                           </button>
-                         )}
                        </div>
                        
-                       <div className="mt-3 text-[14.5px] leading-relaxed whitespace-pre-wrap text-foreground/90 font-medium">
+                       <div className="mt-3 text-[15px] leading-relaxed whitespace-pre-wrap text-foreground/90 font-medium">
                          {post.content}
                        </div>
 
-                       <div className="mt-4 flex items-center gap-6 text-muted border-t border-border/50 pt-3">
+                       <div className="mt-4 flex items-center justify-between text-muted border-t border-border/50 pt-3">
+                         <button className={cn("flex items-center gap-2 hover:text-primary transition-colors group", post.metrics?.hasLiked && "text-primary")}>
+                           <div className="p-1 rounded-full text-muted group-hover:text-primary transition-colors">
+                             <Heart size={20} className={cn(post.metrics?.hasLiked && "fill-primary")} />
+                           </div>
+                           {post.metrics?.likes && post.metrics.likes > 0 ? <span className="text-sm font-bold">{post.metrics?.likes}</span> : null}
+                         </button>
                          <button className="flex items-center gap-2 hover:text-primary transition-colors group">
                            <div className="p-1 rounded-full text-muted group-hover:text-primary transition-colors">
-                             <MessageSquare size={16} />
+                             <MessageSquare size={20} />
                            </div>
-                           <span className="text-xs font-bold">{post.metrics?.comments || 0}</span>
+                           {post.metrics?.comments && post.metrics.comments > 0 ? <span className="text-sm font-bold">{post.metrics?.comments}</span> : null}
                          </button>
-                         <button className={cn("flex items-center gap-2 hover:text-rose-500 transition-colors group", post.metrics?.hasLiked && "text-rose-500")}>
-                           <div className="p-1 rounded-full text-muted group-hover:text-rose-500 transition-colors">
-                             <Heart size={16} className={cn(post.metrics?.hasLiked && "fill-rose-500")} />
+                         <button className="flex items-center gap-2 hover:text-primary transition-colors group">
+                           <div className="p-1 rounded-full text-muted group-hover:text-primary transition-colors flex items-center gap-1 font-bold text-xs uppercase tracking-wider">
+                             <span>A</span>
+                             <RefreshCw size={14} />
+                             <span>文</span>
                            </div>
-                           <span className="text-xs font-bold">{post.metrics?.likes || 0}</span>
+                         </button>
+                         <button className="flex items-center gap-2 hover:text-primary transition-colors group">
+                           <div className="p-1 rounded-full text-muted group-hover:text-primary transition-colors">
+                             <Send size={20} />
+                           </div>
                          </button>
                        </div>
                      </div>

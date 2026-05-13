@@ -11,10 +11,12 @@ import { useRouter } from "next/navigation";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, Cell } from 'recharts';
 import GlobalPosts from "@/src/components/social/GlobalPosts";
 import PrivateChats from "@/src/components/social/PrivateChats";
+import { ThemeToggle } from "@/src/components/ThemeToggle";
 
 export default function Home() {
   const { user, signOut, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState("community");
+  const [learningView, setLearningView] = useState<'decks' | 'create'>('decks');
   const [profile, setProfile] = useState<any>(null);
   const [decks, setDecks] = useState<any[]>([]);
   const [stats, setStats] = useState({ total: 0, weekly: 0 });
@@ -167,7 +169,7 @@ export default function Home() {
     });
 
     if (!error) {
-      setActiveTab('decks');
+      setLearningView('decks');
       setNewAnchor({ word: '', hint: '', level: 'basic', keywords: '', reference_answer: '' });
       fetchData();
     }
@@ -189,7 +191,8 @@ export default function Home() {
           <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted mb-1">Welcome back</p>
           <h1 className="text-3xl md:text-4xl font-serif font-normal text-foreground leading-tight tracking-tight">{profile?.display_name || profile?.name || "Explorer"}</h1>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 md:gap-4">
+          <ThemeToggle className="w-[50px] h-[50px]" />
           <button className="w-[50px] h-[50px] rounded-full bg-secondary text-muted flex items-center justify-center hover:text-foreground transition-colors relative">
             <Bell size={20} />
             <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-accent-orange rounded-full border-2 border-background"></span>
@@ -346,7 +349,7 @@ export default function Home() {
           <h2 className="text-base font-bold text-foreground">My Virtual Models</h2>
           <div className="flex gap-2">
             <button 
-              onClick={() => setActiveTab('create')}
+              onClick={() => setLearningView('create')}
               className="btn-outline btn-sm px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2"
             >
               <Plus size={14} /> Add Concept
@@ -418,13 +421,13 @@ export default function Home() {
     <div className="space-y-6 pb-24 max-w-[420px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
       <header className="py-8 relative">
         <button 
-          onClick={() => setActiveTab('decks')}
+          onClick={() => setLearningView('decks')}
           className="absolute -left-12 top-9 w-10 h-10 rounded-full bg-secondary text-muted hover:text-primary transition-all flex items-center justify-center hidden md:flex"
         >
           <ChevronLeft size={20} className="-ml-0.5" />
         </button>
         <p className="text-[10px] font-medium tracking-[0.13em] uppercase text-muted mb-1 flex items-center gap-2">
-          <button onClick={() => setActiveTab('decks')} className="md:hidden text-primary">← Back</button>
+          <button onClick={() => setLearningView('decks')} className="md:hidden text-primary">← Back</button>
           New Connection
         </p>
         <h1 className="text-[26px] font-serif font-normal text-foreground leading-tight">Anchor Deep</h1>
@@ -515,14 +518,9 @@ export default function Home() {
     <div className="min-h-screen bg-background relative selection:bg-primary/20">
       <main className="px-5 max-w-7xl mx-auto min-h-screen pb-32">
         <AnimatePresence mode="wait">
-          {activeTab === 'decks' && (
-            <motion.div key="dashboard">
-              {renderDashboard()}
-            </motion.div>
-          )}
-          {activeTab === 'create' && (
-            <motion.div key="create">
-              {renderCreateAnchor()}
+          {activeTab === 'learning' && (
+            <motion.div key="learning" className="pt-4">
+               {learningView === 'decks' ? renderDashboard() : renderCreateAnchor()}
             </motion.div>
           )}
           {activeTab === 'community' && (
@@ -566,9 +564,9 @@ export default function Home() {
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-3xl border-t border-border">
         <div className="max-w-4xl mx-auto h-[64px] pb-safe flex justify-around items-center px-4 md:px-12">
           {[
-            { id: 'community', icon: Globe, label: 'Community' },
             { id: 'chats', icon: MessageCircle, label: 'Chats' },
-            { id: 'decks', icon: LayoutGrid, label: 'Library' },
+            { id: 'community', icon: Globe, label: 'Moments' },
+            { id: 'learning', icon: BookOpen, label: 'Learn' },
             { id: 'profile', icon: User, label: 'Me', href: '/profile' },
           ].map((item) => (
             item.href ? (

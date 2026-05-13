@@ -1,5 +1,27 @@
 @import "tailwindcss";
 
+:root {
+  --background: #f8f7f5;
+  --foreground: #1f1d1a;
+  --card: #ffffff;
+  --muted: #8b8680;
+  --muted-light: #d4cfc7;
+  --muted-bg: #f3ede8;
+  --border: #e8e3d8;
+  --secondary: #f3ede8;
+}
+
+.dark {
+  --background: #121212;
+  --foreground: #f8f7f5;
+  --card: #1e1e1e;
+  --muted: #a1a1aa;
+  --muted-light: #3f3f46;
+  --muted-bg: #27272a;
+  --border: #3f3f46;
+  --secondary: #27272a;
+}
+
 @theme {
   /* Typography */
   --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -20,14 +42,14 @@
   --color-accent-orange: #f97316;  /* Orange — alerts, destructive actions */
 
   /* Neutral Colors - Clean grayscale */
-  --color-secondary: #f3ede8;      /* Map secondary to muted-bg for compatibility */
-  --color-background: #f8f7f5;     /* Off-white page background */
-  --color-card: #ffffff;           /* Pure white cards */
-  --color-foreground: #1f1d1a;     /* Near black text */
-  --color-muted: #8b8680;          /* Medium gray — secondary text */
-  --color-muted-light: #d4cfc7;    /* Light gray — borders, dividers */
-  --color-muted-bg: #f3ede8;       /* Very light gray — input backgrounds */
-  --color-border: #e8e3d8;         /* Subtle card borders */
+  --color-secondary: var(--secondary);      /* Map secondary to muted-bg for compatibility */
+  --color-background: var(--background);     /* Off-white page background */
+  --color-card: var(--card);           /* Pure white cards */
+  --color-foreground: var(--foreground);     /* Near black text */
+  --color-muted: var(--muted);          /* Medium gray — secondary text */
+  --color-muted-light: var(--muted-light);    /* Light gray — borders, dividers */
+  --color-muted-bg: var(--muted-bg);       /* Very light gray — input backgrounds */
+  --color-border: var(--border);         /* Subtle card borders */
 
   /* Semantic Colors */
   --color-success: #10b981;

@@ -6,6 +6,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { AuthProvider } from "@/src/context/AuthContext";
+import { ThemeProvider } from "@/src/components/ThemeProvider";
 
 export const metadata: Metadata = {
   title: "Rituals — Spaced Repetition Mastery",
@@ -18,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link
           href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Serif+Display&display=swap"
@@ -26,9 +27,16 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans antialiased">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

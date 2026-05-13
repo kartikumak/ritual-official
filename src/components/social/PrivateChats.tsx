@@ -181,19 +181,25 @@ export default function PrivateChats({ userId }: { userId: string }) {
                   activeChatId === chat.id && "bg-white/80 shrink-0 shadow-[inset_3px_0_0_var(--color-primary)]"
                 )}
               >
-                <div className="w-10 h-10 rounded-full bg-primary-lighter text-primary flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden relative">
+                <div className="w-[50px] h-[50px] rounded-full bg-primary-lighter text-primary flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden relative shadow-inner">
                   {chat.other_user?.avatar_url ? (
                     <img src={chat.other_user?.avatar_url} alt="" className="w-full h-full object-cover" />
                   ) : (
                     getInitials(chat.other_user?.display_name || chat.other_user?.username || '?')
                   )}
+                  <div className="absolute bottom-0 left-0 w-4 h-4 bg-background rounded-full flex items-center justify-center">
+                     <div className="w-3 h-3 rounded-full bg-[radial-gradient(ellipse_at_top,var(--color-primary),var(--color-accent-teal))] border border-background"></div>
+                  </div>
                 </div>
                 <div className="flex-1 min-w-0 pr-2">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm truncate">{chat.other_user?.display_name || chat.other_user?.username}</span>
-                    <span className="text-[9px] text-muted whitespace-nowrap">{formatDistanceToNow(new Date(chat.updated_at), { addSuffix: false })}</span>
+                    <div className="flex items-center gap-2 truncate">
+                      <span className="font-bold text-[15px] tracking-tight truncate">{chat.other_user?.display_name || chat.other_user?.username}</span>
+                      <span className="shrink-0 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-black italic px-1.5 py-0.5 rounded-sm uppercase tracking-wider">VIP</span>
+                    </div>
+                    <span className="text-[11px] font-medium text-muted shrink-0 whitespace-nowrap">{formatDistanceToNow(new Date(chat.updated_at), { addSuffix: false })}</span>
                   </div>
-                  <p className="text-xs text-muted truncate mt-0.5">Joined conversation</p>
+                  <p className="text-[13px] text-muted truncate mt-0.5 font-medium">Joined conversation. Say hi!</p>
                 </div>
               </button>
             ))
