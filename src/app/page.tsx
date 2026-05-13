@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Star, Plus, Settings as SettingsIcon, LayoutGrid, LogOut, Download, Upload, Trash2, AlertCircle, TrendingUp, ShoppingBag, User, ChevronRight, Search, Zap, CloudLightning, Bell, ChevronLeft } from "lucide-react";
+import { BookOpen, Star, Plus, Settings as SettingsIcon, LayoutGrid, LogOut, Download, Upload, Trash2, AlertCircle, TrendingUp, ShoppingBag, User, ChevronRight, Search, Zap, CloudLightning, Bell, ChevronLeft, Globe, MessageCircle } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { cn, getInitials } from "@/src/lib/utils";
 import { useAuth } from "@/src/context/AuthContext";
@@ -9,11 +9,12 @@ import { getSupabase } from "@/src/lib/supabase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, Cell } from 'recharts';
-import SocialHub from "@/src/components/social/SocialHub";
+import GlobalPosts from "@/src/components/social/GlobalPosts";
+import PrivateChats from "@/src/components/social/PrivateChats";
 
 export default function Home() {
   const { user, signOut, loading: authLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState("social");
+  const [activeTab, setActiveTab] = useState("community");
   const [profile, setProfile] = useState<any>(null);
   const [decks, setDecks] = useState<any[]>([]);
   const [stats, setStats] = useState({ total: 0, weekly: 0 });
@@ -524,9 +525,38 @@ export default function Home() {
               {renderCreateAnchor()}
             </motion.div>
           )}
-          {activeTab === 'social' && (
-            <motion.div key="social">
-              <SocialHub userId={user?.id || ''} />
+          {activeTab === 'community' && (
+            <motion.div key="community">
+              <div className="max-w-5xl mx-auto space-y-6 md:space-y-8 pb-20 md:pb-32 px-2 md:px-0 pt-4">
+                 <header className="flex flex-col gap-2">
+                   <div className="flex items-center gap-3">
+                      <div className="p-2.5 bg-primary/5 rounded-[18px] md:rounded-[22px] border border-primary/10">
+                         <Globe size={24} className="text-primary" />
+                      </div>
+                      <h1 className="text-3xl md:text-5xl font-serif text-foreground tracking-tight">Community</h1>
+                   </div>
+                   <p className="text-sm md:text-base text-muted-foreground flex items-center gap-2 font-medium">
+                     <CloudLightning size={16} className="text-primary-light" />
+                     Global Insights & Pulse
+                   </p>
+                 </header>
+                 <GlobalPosts userId={user?.id || ''} />
+              </div>
+            </motion.div>
+          )}
+          {activeTab === 'chats' && (
+            <motion.div key="chats">
+               <div className="max-w-5xl mx-auto space-y-6 md:space-y-8 pb-20 md:pb-32 px-2 md:px-0 pt-4">
+                 <header className="flex flex-col gap-2 mb-6">
+                   <div className="flex items-center gap-3">
+                      <div className="p-2.5 bg-primary/5 rounded-[18px] md:rounded-[22px] border border-primary/10">
+                         <MessageCircle size={24} className="text-primary" />
+                      </div>
+                      <h1 className="text-3xl md:text-5xl font-serif text-foreground tracking-tight">Conversations</h1>
+                   </div>
+                 </header>
+                 <PrivateChats userId={user?.id || ''} />
+               </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -536,9 +566,10 @@ export default function Home() {
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-3xl border-t border-border">
         <div className="max-w-4xl mx-auto h-[64px] pb-safe flex justify-around items-center px-4 md:px-12">
           {[
-            { id: 'social', icon: CloudLightning, label: 'Community' },
+            { id: 'community', icon: Globe, label: 'Community' },
+            { id: 'chats', icon: MessageCircle, label: 'Chats' },
             { id: 'decks', icon: LayoutGrid, label: 'Library' },
-            { id: 'profile', icon: SettingsIcon, label: 'Settings', href: '/profile' },
+            { id: 'profile', icon: User, label: 'Me', href: '/profile' },
           ].map((item) => (
             item.href ? (
               <Link key={item.id} href={item.href} className="group flex flex-col items-center gap-1 w-16">
