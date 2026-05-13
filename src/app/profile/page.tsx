@@ -14,7 +14,13 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
+    display_name: '',
+    bio: '',
+    country: '',
+    native_language: '',
+    learning_languages: '',
+    learning_goals: '',
     avatar_url: '',
     weekly_goal: 140,
     settings: { reminders: true, haptics: true }
@@ -33,7 +39,13 @@ export default function ProfilePage() {
     if (data) {
       setProfile(data);
       setFormData({
-        name: data.name || '',
+        username: data.username || '',
+        display_name: data.display_name || data.name || '',
+        bio: data.bio || '',
+        country: data.country || '',
+        native_language: data.native_language || '',
+        learning_languages: data.learning_languages ? data.learning_languages.join(', ') : '',
+        learning_goals: data.learning_goals || '',
         avatar_url: data.avatar_url || '',
         weekly_goal: data.weekly_goal || 140,
         settings: data.settings || { reminders: true, haptics: true }
@@ -45,7 +57,14 @@ export default function ProfilePage() {
   const handleSave = async () => {
     setIsSaving(true);
     const { error } = await supabase.from('profiles').update({
-      name: formData.name,
+      username: formData.username,
+      display_name: formData.display_name,
+      name: formData.display_name,
+      bio: formData.bio,
+      country: formData.country,
+      native_language: formData.native_language,
+      learning_languages: formData.learning_languages.split(',').map(s => s.trim()).filter(Boolean),
+      learning_goals: formData.learning_goals,
       avatar_url: formData.avatar_url,
       weekly_goal: formData.weekly_goal,
       settings: formData.settings
@@ -86,7 +105,7 @@ export default function ProfilePage() {
                 {formData.avatar_url ? (
                   <img src={formData.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-[32px] font-serif font-bold text-primary">{getInitials(formData.name || user?.email || "?")}</span>
+                  <span className="text-[32px] font-serif font-bold text-primary">{getInitials(formData.display_name || user?.email || "?")}</span>
                 )}
               </div>
               <button className="absolute -right-1 -bottom-1 w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center shadow-md active:scale-90 transition-transform">
@@ -94,8 +113,10 @@ export default function ProfilePage() {
               </button>
             </div>
             <div className="text-center">
-              <h2 className="text-xl font-bold text-foreground">{formData.name || "Unnamed Entity"}</h2>
-              <p className="text-[11px] font-medium text-muted uppercase tracking-wider">{user?.email}</p>
+              <h2 className="text-xl font-bold text-foreground">{formData.display_name || "Unnamed Explorer"}</h2>
+              <p className="text-[11px] font-medium text-muted uppercase tracking-wider">
+                {formData.username ? `@${formData.username}` : user?.email}
+              </p>
             </div>
           </section>
 
@@ -123,9 +144,56 @@ export default function ProfilePage() {
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold text-muted uppercase tracking-wider px-1">Display Name</label>
                 <input 
-                  value={formData.name}
-                  onChange={e => setFormData({...formData, name: e.target.value})}
+                  value={formData.display_name}
+                  onChange={e => setFormData({...formData, display_name: e.target.value})}
                   placeholder="Enter your name..."
+                  className="field py-3.5"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-muted uppercase tracking-wider px-1">Username</label>
+                <input 
+                  value={formData.username}
+                  onChange={e => setFormData({...formData, username: e.target.value.toLowerCase()})}
+                  placeholder="@username"
+                  className="field py-3.5"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-muted uppercase tracking-wider px-1">Bio</label>
+                <textarea 
+                  value={formData.bio}
+                  onChange={e => setFormData({...formData, bio: e.target.value})}
+                  placeholder="Short description of your learning journey..."
+                  className="field py-3.5 min-h-[80px]"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-muted uppercase tracking-wider px-1">Native Language</label>
+                  <input 
+                    value={formData.native_language}
+                    onChange={e => setFormData({...formData, native_language: e.target.value})}
+                    placeholder="e.g. English"
+                    className="field py-3.5"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-muted uppercase tracking-wider px-1">Country</label>
+                  <input 
+                    value={formData.country}
+                    onChange={e => setFormData({...formData, country: e.target.value})}
+                    placeholder="e.g. USA"
+                    className="field py-3.5"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-muted uppercase tracking-wider px-1">Learning Languages</label>
+                <input 
+                  value={formData.learning_languages}
+                  onChange={e => setFormData({...formData, learning_languages: e.target.value})}
+                  placeholder="e.g. Japanese, Spanish (comma separated)"
                   className="field py-3.5"
                 />
               </div>
@@ -136,7 +204,7 @@ export default function ProfilePage() {
                     type="number"
                     value={formData.weekly_goal}
                     onChange={e => setFormData({...formData, weekly_goal: parseInt(e.target.value) || 0})}
-                    className="field flex-1"
+                    className="field flex-1 py-3.5"
                   />
                   <div className="w-12 h-12 rounded-[--radius-md] bg-primary-lighter flex items-center justify-center text-primary shadow-sm">
                     <Target size={24} />

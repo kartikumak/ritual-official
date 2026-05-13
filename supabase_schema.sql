@@ -7,6 +7,13 @@ create extension if not exists "uuid-ossp";
 create table if not exists public.profiles (
   id uuid references auth.users on delete cascade not null primary key,
   name text,
+  username text unique,
+  display_name text,
+  bio text,
+  country text,
+  native_language text,
+  learning_languages text[],
+  learning_goals text,
   email text unique,
   avatar_url text,
   weekly_goal int default 140,
@@ -123,6 +130,72 @@ create table if not exists public.voice_posts (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- FOLLOWS
+create table if not exists public.follows (
+  id uuid default uuid_generate_v4() primary key,
+  follower_id uuid references public.profiles(id) on delete cascade not null,
+  following_id uuid references public.profiles(id) on delete cascade not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(follower_id, following_id)
+);
+
+-- BLOCKS
+create table if not exists public.blocks (
+  id uuid default uuid_generate_v4() primary key,
+  blocker_id uuid references public.profiles(id) on delete cascade not null,
+  blocked_id uuid references public.profiles(id) on delete cascade not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(blocker_id, blocked_id)
+);
+
+-- PRIVATE CHATS
+create table if not exists public.private_chats (
+  id uuid default uuid_generate_v4() primary key,
+  user1_id uuid references public.profiles(id) on delete cascade not null,
+  user2_id uuid references public.profiles(id) on delete cascade not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(user1_id, user2_id)
+);
+
+-- PRIVATE MESSAGES
+create table if not exists public.private_messages (
+  id uuid default uuid_generate_v4() primary key,
+  chat_id uuid references public.private_chats(id) on delete cascade not null,
+  sender_id uuid references public.profiles(id) on delete cascade not null,
+  content text not null,
+  is_read boolean default false,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- LEARNING POSTS
+create table if not exists public.learning_posts (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  content text not null,
+  image_url text,
+  audio_url text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- LEARNING POST COMMENTS
+create table if not exists public.learning_post_comments (
+  id uuid default uuid_generate_v4() primary key,
+  post_id uuid references public.learning_posts(id) on delete cascade not null,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  content text not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- LEARNING POST LIKES
+create table if not exists public.learning_post_likes (
+  id uuid default uuid_generate_v4() primary key,
+  post_id uuid references public.learning_posts(id) on delete cascade not null,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(post_id, user_id)
+);
+
 -- Migration logic for existing tables
 do $$
 begin
@@ -131,6 +204,15 @@ begin
   end if;
   if not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'total_rituals') then
     alter table public.profiles add column total_rituals int default 0;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'username') then
+    alter table public.profiles add column username text unique,
+      add column display_name text,
+      add column bio text,
+      add column country text,
+      add column native_language text,
+      add column learning_languages text[],
+      add column learning_goals text;
   end if;
 end
 $$;
@@ -146,6 +228,13 @@ alter table public.chat_messages enable row level security;
 alter table public.recall_rooms enable row level security;
 alter table public.room_participants enable row level security;
 alter table public.voice_posts enable row level security;
+alter table public.follows enable row level security;
+alter table public.blocks enable row level security;
+alter table public.private_chats enable row level security;
+alter table public.private_messages enable row level security;
+alter table public.learning_posts enable row level security;
+alter table public.learning_post_comments enable row level security;
+alter table public.learning_post_likes enable row level security;
 
 -- Policies (Using DO blocks to avoid errors if they already exist)
 do $$
@@ -236,6 +325,64 @@ begin
   if not exists (select 1 from pg_policies where tablename = 'voice_posts' and policyname = 'Users can delete their own voice posts') then
     create policy "Users can delete their own voice posts" on public.voice_posts for delete using (auth.uid() = user_id);
   end if;
+
+  -- Social Extensions
+  if not exists (select 1 from pg_policies where tablename = 'follows' and policyname = 'Anyone can view follows') then
+    create policy "Anyone can view follows" on public.follows for select using (true);
+  end if;
+  if not exists (select 1 from pg_policies where tablename = 'follows' and policyname = 'Users can manage follows') then
+    create policy "Users can manage follows" on public.follows for all using (auth.uid() = follower_id);
+  end if;
+
+  if not exists (select 1 from pg_policies where tablename = 'blocks' and policyname = 'Users can view their blocks') then
+    create policy "Users can view their blocks" on public.blocks for select using (auth.uid() = blocker_id);
+  end if;
+  if not exists (select 1 from pg_policies where tablename = 'blocks' and policyname = 'Users can manage blocks') then
+    create policy "Users can manage blocks" on public.blocks for all using (auth.uid() = blocker_id);
+  end if;
+
+  if not exists (select 1 from pg_policies where tablename = 'private_chats' and policyname = 'Users can view their chats') then
+    create policy "Users can view their chats" on public.private_chats for select using (auth.uid() = user1_id or auth.uid() = user2_id);
+  end if;
+  if not exists (select 1 from pg_policies where tablename = 'private_chats' and policyname = 'Users can create chats') then
+    create policy "Users can create chats" on public.private_chats for insert with check (auth.uid() = user1_id or auth.uid() = user2_id);
+  end if;
+
+  if not exists (select 1 from pg_policies where tablename = 'private_messages' and policyname = 'Users can view their chat messages') then
+    create policy "Users can view their chat messages" on public.private_messages for select using (
+      exists (select 1 from public.private_chats where id = chat_id and (user1_id = auth.uid() or user2_id = auth.uid()))
+    );
+  end if;
+  if not exists (select 1 from pg_policies where tablename = 'private_messages' and policyname = 'Users can insert chat messages') then
+    create policy "Users can insert chat messages" on public.private_messages for insert with check (auth.uid() = sender_id);
+  end if;
+  if not exists (select 1 from pg_policies where tablename = 'private_messages' and policyname = 'Users can update read status') then
+    create policy "Users can update read status" on public.private_messages for update using (
+      exists (select 1 from public.private_chats where id = chat_id and (user1_id = auth.uid() or user2_id = auth.uid()))
+    );
+  end if;
+
+  if not exists (select 1 from pg_policies where tablename = 'learning_posts' and policyname = 'Anyone can view posts') then
+    create policy "Anyone can view posts" on public.learning_posts for select using (true);
+  end if;
+  if not exists (select 1 from pg_policies where tablename = 'learning_posts' and policyname = 'Users can manage posts') then
+    create policy "Users can manage posts" on public.learning_posts for all using (auth.uid() = user_id);
+  end if;
+
+  if not exists (select 1 from pg_policies where tablename = 'learning_post_comments' and policyname = 'Anyone can view comments') then
+    create policy "Anyone can view comments" on public.learning_post_comments for select using (true);
+  end if;
+  if not exists (select 1 from pg_policies where tablename = 'learning_post_comments' and policyname = 'Users can manage comments') then
+    create policy "Users can manage comments" on public.learning_post_comments for all using (auth.uid() = user_id);
+  end if;
+
+  if not exists (select 1 from pg_policies where tablename = 'learning_post_likes' and policyname = 'Anyone can view likes') then
+    create policy "Anyone can view likes" on public.learning_post_likes for select using (true);
+  end if;
+  if not exists (select 1 from pg_policies where tablename = 'learning_post_likes' and policyname = 'Users can manage likes') then
+    create policy "Users can manage likes" on public.learning_post_likes for all using (auth.uid() = user_id);
+  end if;
+
 end
 $$;
 

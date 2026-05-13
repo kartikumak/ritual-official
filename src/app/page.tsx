@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Star, Plus, Settings as SettingsIcon, LayoutGrid, LogOut, Download, Upload, Trash2, AlertCircle, TrendingUp, ShoppingBag, User, ChevronRight, Search, Zap, CloudLightning } from "lucide-react";
+import { BookOpen, Star, Plus, Settings as SettingsIcon, LayoutGrid, LogOut, Download, Upload, Trash2, AlertCircle, TrendingUp, ShoppingBag, User, ChevronRight, Search, Zap, CloudLightning, Bell } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { cn, getInitials } from "@/src/lib/utils";
 import { useAuth } from "@/src/context/AuthContext";
@@ -186,11 +186,21 @@ export default function Home() {
       <header className="flex items-center justify-between py-10 px-0">
         <div>
           <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-muted mb-1">Welcome back</p>
-          <h1 className="text-3xl md:text-4xl font-serif font-normal text-foreground leading-tight tracking-tight">{profile?.name || "Max"}</h1>
+          <h1 className="text-3xl md:text-4xl font-serif font-normal text-foreground leading-tight tracking-tight">{profile?.display_name || profile?.name || "Explorer"}</h1>
         </div>
-        <Link href="/profile" className="w-[50px] h-[50px] rounded-full bg-primary-lighter text-primary font-bold flex items-center justify-center text-lg shrink-0 hover:bg-primary-light transition-all shadow-sm">
-          {getInitials(profile?.name || user?.email || "M")}
-        </Link>
+        <div className="flex items-center gap-4">
+          <button className="w-[50px] h-[50px] rounded-full bg-secondary text-muted flex items-center justify-center hover:text-foreground transition-colors relative">
+            <Bell size={20} />
+            <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-accent-orange rounded-full border-2 border-background"></span>
+          </button>
+          <Link href="/profile" className="w-[50px] h-[50px] rounded-full bg-primary-lighter text-primary font-bold flex items-center justify-center text-lg shrink-0 hover:bg-primary-light transition-all shadow-sm overflow-hidden">
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+            ) : (
+              getInitials(profile?.display_name || profile?.name || user?.email || "E")
+            )}
+          </Link>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
