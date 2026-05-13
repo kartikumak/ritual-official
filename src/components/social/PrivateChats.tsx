@@ -168,8 +168,8 @@ export default function PrivateChats({ userId }: { userId: string }) {
           {chats.length === 0 ? (
             <div className="p-8 flex flex-col items-center justify-center text-center opacity-40 pt-16">
               <MessageSquare size={32} className="mb-3 text-muted" />
-              <p className="text-xs font-bold uppercase tracking-wider mb-1">No active syncs</p>
-              <p className="text-[10px]">Your communication matrix is currently quiet.</p>
+              <p className="text-xs font-bold uppercase tracking-wider mb-1">No active conversations</p>
+              <p className="text-[10px]">Start a chat from the global feed or a user's profile.</p>
             </div>
           ) : (
             chats.map(chat => (
@@ -193,7 +193,7 @@ export default function PrivateChats({ userId }: { userId: string }) {
                     <span className="font-bold text-sm truncate">{chat.other_user?.display_name || chat.other_user?.username}</span>
                     <span className="text-[9px] text-muted whitespace-nowrap">{formatDistanceToNow(new Date(chat.updated_at), { addSuffix: false })}</span>
                   </div>
-                  <p className="text-xs text-muted truncate mt-0.5">Wait, are we fetching latest message? That requires complex SQL. Assuming updated.</p>
+                  <p className="text-xs text-muted truncate mt-0.5">Joined conversation</p>
                 </div>
               </button>
             ))
@@ -209,7 +209,7 @@ export default function PrivateChats({ userId }: { userId: string }) {
         {!activeChatId ? (
           <div className="flex-1 flex flex-col items-center justify-center opacity-20 pointer-events-none select-none">
             <MessageSquare size={64} strokeWidth={1} className="mb-6 text-muted" />
-            <p className="text-sm font-bold uppercase tracking-widest">Select a connection channel</p>
+            <p className="text-sm font-bold uppercase tracking-widest">Select a conversation</p>
           </div>
         ) : (
           <div className="flex-1 flex flex-col overflow-hidden">
@@ -243,8 +243,8 @@ export default function PrivateChats({ userId }: { userId: string }) {
             <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
                {messages.length === 0 ? (
                  <div className="h-full flex flex-col items-center justify-center text-muted opacity-50 text-center">
-                   <p className="text-xs font-bold uppercase tracking-wider mb-2">Channel Initialized</p>
-                   <p className="text-[10px]">Send a message to open communication.</p>
+                   <p className="text-xs font-bold uppercase tracking-wider mb-2">Conversation Started</p>
+                   <p className="text-[10px]">Send a message to introduce yourself.</p>
                  </div>
                ) : (
                  messages.map(msg => {

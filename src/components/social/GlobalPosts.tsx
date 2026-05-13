@@ -120,7 +120,7 @@ export default function GlobalPosts({ userId }: { userId: string }) {
             <textarea
               value={newPostContent}
               onChange={(e) => setNewPostContent(e.target.value)}
-              placeholder="Share a learning insight, e.g. 'Today I explained photosynthesis from memory.'"
+              placeholder="What are you learning today?"
               className="w-full bg-transparent border-0 border-b border-border focus:ring-0 focus:border-primary resize-none text-sm p-2 outline-none"
               rows={2}
             />

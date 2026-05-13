@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Star, Plus, Settings as SettingsIcon, LayoutGrid, LogOut, Download, Upload, Trash2, AlertCircle, TrendingUp, ShoppingBag, User, ChevronRight, Search, Zap, CloudLightning, Bell } from "lucide-react";
+import { BookOpen, Star, Plus, Settings as SettingsIcon, LayoutGrid, LogOut, Download, Upload, Trash2, AlertCircle, TrendingUp, ShoppingBag, User, ChevronRight, Search, Zap, CloudLightning, Bell, ChevronLeft } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { cn, getInitials } from "@/src/lib/utils";
 import { useAuth } from "@/src/context/AuthContext";
@@ -13,7 +13,7 @@ import SocialHub from "@/src/components/social/SocialHub";
 
 export default function Home() {
   const { user, signOut, loading: authLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState("decks");
+  const [activeTab, setActiveTab] = useState("social");
   const [profile, setProfile] = useState<any>(null);
   const [decks, setDecks] = useState<any[]>([]);
   const [stats, setStats] = useState({ total: 0, weekly: 0 });
@@ -339,17 +339,24 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Decks Section */}
+          {/* Decks Section */}
       <section className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500 delay-400">
         <div className="flex items-center justify-between px-1">
           <h2 className="text-base font-bold text-foreground">My Virtual Models</h2>
-          <button 
-            onClick={() => setShowNewDeckModal(true)}
-            className="btn-primary btn-sm px-6 py-2 rounded-full text-xs font-bold flex items-center gap-2"
-          >
-            <Plus size={14} />
-            Initialize Deck
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setActiveTab('create')}
+              className="btn-outline btn-sm px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2"
+            >
+              <Plus size={14} /> Add Concept
+            </button>
+            <button 
+              onClick={() => setShowNewDeckModal(true)}
+              className="btn-primary btn-sm px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2"
+            >
+              <Plus size={14} /> New Deck
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -408,8 +415,17 @@ export default function Home() {
 
   const renderCreateAnchor = () => (
     <div className="space-y-6 pb-24 max-w-[420px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <header className="py-8">
-        <p className="text-[10px] font-medium tracking-[0.13em] uppercase text-muted mb-1">New Connection</p>
+      <header className="py-8 relative">
+        <button 
+          onClick={() => setActiveTab('decks')}
+          className="absolute -left-12 top-9 w-10 h-10 rounded-full bg-secondary text-muted hover:text-primary transition-all flex items-center justify-center hidden md:flex"
+        >
+          <ChevronLeft size={20} className="-ml-0.5" />
+        </button>
+        <p className="text-[10px] font-medium tracking-[0.13em] uppercase text-muted mb-1 flex items-center gap-2">
+          <button onClick={() => setActiveTab('decks')} className="md:hidden text-primary">← Back</button>
+          New Connection
+        </p>
         <h1 className="text-[26px] font-serif font-normal text-foreground leading-tight">Anchor Deep</h1>
       </header>
 
@@ -518,15 +534,10 @@ export default function Home() {
 
       {/* Navigation Rail */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-3xl border-t border-border">
-        <div className="max-w-7xl mx-auto h-[72px] flex justify-around items-center px-4 md:px-12">
+        <div className="max-w-4xl mx-auto h-[64px] pb-safe flex justify-around items-center px-4 md:px-12">
           {[
-            { id: 'decks', icon: LayoutGrid, label: 'Decks' },
-            { id: 'study', icon: Star, label: 'Study', onClick: () => {
-              if (decks.length > 0) router.push(`/study/${decks[0].id}`);
-              else setActiveTab('decks');
-            }},
-            { id: 'create', icon: Plus, label: 'Create' },
-            { id: 'social', icon: CloudLightning, label: 'Pulse' },
+            { id: 'social', icon: CloudLightning, label: 'Community' },
+            { id: 'decks', icon: LayoutGrid, label: 'Library' },
             { id: 'profile', icon: SettingsIcon, label: 'Settings', href: '/profile' },
           ].map((item) => (
             item.href ? (
@@ -542,7 +553,7 @@ export default function Home() {
             ) : (
               <button 
                 key={item.id}
-                onClick={item.onClick || (() => setActiveTab(item.id))}
+                onClick={() => setActiveTab(item.id)}
                 className={cn(
                   "group flex flex-col items-center gap-1 w-16 transition-all",
                   activeTab === item.id ? "text-primary" : "text-muted"
