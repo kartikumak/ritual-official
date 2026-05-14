@@ -188,185 +188,178 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
   const progress = currentAnchor.anchor_progress?.[0] || {};
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground overflow-x-hidden">
+    <div className="flex flex-col min-h-screen bg-background text-foreground overflow-x-hidden relative">
+      {/* Background ambient glow */}
+      <div className="absolute top-0 inset-x-0 h-[400px] bg-gradient-to-b from-primary/10 to-transparent blur-[80px] pointer-events-none -z-10" />
+
       {/* Session Top Bar */}
-      <header className="max-w-[420px] mx-auto w-full px-5 pt-12 pb-6 flex items-center justify-between">
+      <header className="max-w-2xl mx-auto w-full px-6 pt-12 pb-8 flex items-center justify-between relative z-10">
         <div>
-          <p className="text-[10px] font-medium tracking-[0.13em] uppercase text-muted mb-1">Study Session</p>
-          <div className="text-[20px] font-semibold text-foreground leading-none">{index + 1} <span className="text-[14px] text-muted font-medium">/ {anchors.length}</span></div>
+          <p className="text-[10px] font-bold tracking-widest uppercase text-muted mb-2">Study Session</p>
+          <div className="text-xl font-medium text-foreground leading-none flex items-baseline gap-1">
+            <span>{index + 1}</span>
+            <span className="text-sm text-muted">/ {anchors.length}</span>
+          </div>
         </div>
-        <span className="text-[12px] text-muted font-medium bg-secondary px-3 py-1.5 rounded-full">{deck?.name}</span>
+        <button onClick={() => router.push('/')} className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted hover:text-foreground transition-colors shadow-sm">
+           <ChevronLeft size={20} className="-ml-0.5" />
+        </button>
       </header>
 
-      <main className="max-w-[420px] mx-auto w-full px-5 flex-1 flex flex-col pb-20">
+      <main className="max-w-2xl mx-auto w-full px-6 flex-1 flex flex-col pb-24 relative z-10">
         <AnimatePresence mode="wait">
           {phase === 'input' ? (
-            <motion.div key="input" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex-1 flex flex-col">
+            <motion.div key="input" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.98 }} className="flex-1 flex flex-col">
               {/* Progress Bar */}
-              <div className="mb-6">
-                <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+              <div className="mb-8">
+                <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
                   <motion.div 
                     initial={{ width: 0 }}
                     animate={{ width: `${(index / anchors.length) * 100}%` }}
-                    className="h-full bg-primary rounded-full transition-all duration-500"
+                    className="h-full bg-primary rounded-full transition-all duration-700 ease-out"
                   />
                 </div>
-                <div className="flex justify-between mt-1.5 px-0.5">
-                  <span className="text-[11px] text-muted">{index} done</span>
-                  <span className="text-[11px] text-muted">review session</span>
-                </div>
               </div>
 
-              {/* Anchor Card */}
-              <div className="anchor-card relative animate-in fade-in zoom-in duration-500">
-                <div className="relative z-10">
-                  <p className="text-[10px] font-semibold tracking-[0.12em] uppercase text-white/60 mb-2">Anchor · {currentAnchor.level}</p>
-                  <h2 className="text-[32px] font-serif text-white leading-tight mb-2">{currentAnchor.word}</h2>
-                  {currentAnchor.hint && <p className="text-[11px] text-white/60 italic">{currentAnchor.hint}</p>}
-                </div>
+              {/* Anchor Card / Concept Title */}
+              <div className="text-center mb-8">
+                <h2 className="text-4xl sm:text-5xl font-serif text-foreground leading-tight mb-3 drop-shadow-sm">{currentAnchor.word}</h2>
+                {currentAnchor.hint && <p className="text-sm text-muted font-medium px-4">{currentAnchor.hint}</p>}
               </div>
 
-              {/* Input Tabs (Optional, but let's keep clean) */}
-              <div className="flex gap-1.5 mb-4">
+              {/* Input Tabs */}
+              <div className="flex gap-2 mb-6">
                 <button 
-                  onClick={() => setShowDrawingPad(false)}
+                  onClick={() => { setShowDrawingPad(false); setShowVoiceRecorder(false); }}
                   className={cn(
-                    "flex-1 py-2 rounded-lg border-[1.5px] text-[12px] font-medium flex items-center justify-center gap-2 transition-all",
-                    !showDrawingPad ? "bg-primary-light text-primary border-transparent" : "bg-card text-muted border-border"
+                    "flex-1 py-3 rounded-[1.5rem] text-xs font-bold flex items-center justify-center gap-2 transition-all",
+                    !showDrawingPad && !showVoiceRecorder ? "bg-foreground text-background shadow-lg" : "bg-card text-muted shadow-sm hover:text-foreground"
                   )}
                 >
-                  <Quote size={14} /> Write
+                  <Quote size={16} /> Type
                 </button>
                 <button 
-                  onClick={() => setShowDrawingPad(true)}
+                  onClick={() => { setShowDrawingPad(true); setShowVoiceRecorder(false); }}
                   className={cn(
-                    "flex-1 py-2 rounded-lg border-[1.5px] text-[12px] font-medium flex items-center justify-center gap-2 transition-all",
-                    showDrawingPad ? "bg-primary-light text-primary border-transparent" : "bg-card text-muted border-border"
+                    "flex-1 py-3 rounded-[1.5rem] text-xs font-bold flex items-center justify-center gap-2 transition-all",
+                    showDrawingPad ? "bg-foreground text-background shadow-lg" : "bg-card text-muted shadow-sm hover:text-foreground"
                   )}
                 >
-                  <ImageIcon size={14} /> Draw
+                  <ImageIcon size={16} /> Draw
+                </button>
+                <button 
+                  onClick={() => { setShowVoiceRecorder(true); setShowDrawingPad(false); }}
+                  className={cn(
+                    "flex-1 py-3 rounded-[1.5rem] text-xs font-bold flex items-center justify-center gap-2 transition-all",
+                    showVoiceRecorder ? "bg-foreground text-background shadow-lg" : "bg-card text-muted shadow-sm hover:text-foreground"
+                  )}
+                >
+                  <Mic size={16} /> Speak
                 </button>
               </div>
 
               {/* Recall Workspace */}
               <div className="flex-1 flex flex-col gap-4">
                 {showDrawingPad ? (
-                   <div className="flex flex-col gap-3">
-                     <div className="bg-white rounded-lg border-[1.5px] border-border overflow-hidden h-[220px]">
+                   <div className="flex flex-col gap-4">
+                     <div className="bg-card rounded-[2rem] border border-white/20 shadow-md overflow-hidden h-[300px] relative w-full">
                        <DrawingPad onSave={(data) => { setCurrentDrawing(data); setShowDrawingPad(false); }} onClose={() => setShowDrawingPad(false)} />
                      </div>
                      <textarea 
                         value={recallText}
                         onChange={(e) => setRecallText(e.target.value)}
-                        placeholder="(Optional) Add a text note to go with your drawing…"
-                        className="field min-h-[80px] resize-none"
+                        placeholder="(Optional) Add context to your drawing..."
+                        className="w-full bg-card shadow-sm border border-transparent focus:border-primary/30 rounded-[1.5rem] px-5 py-4 text-sm font-medium outline-none transition-all min-h-[80px] resize-none"
                       />
                    </div>
                 ) : (
-                  <textarea 
-                    value={recallText}
-                    onChange={(e) => setRecallText(e.target.value)}
-                    placeholder="Write everything you know about this anchor… Concepts, connections, examples — all of it. Don't worry about being perfect."
-                    className="field flex-1 min-h-[160px] resize-none leading-relaxed"
-                    autoFocus
-                  />
+                  <div className="relative flex-1 min-h-[220px]">
+                     <textarea 
+                       value={recallText}
+                       onChange={(e) => setRecallText(e.target.value)}
+                       placeholder="Express your understanding..."
+                       className="absolute inset-0 w-full h-full bg-card shadow-sm border border-transparent focus:border-primary/30 rounded-[2rem] p-6 text-base leading-relaxed outline-none transition-all resize-none font-medium placeholder:text-muted/60"
+                       autoFocus
+                     />
+                  </div>
                 )}
 
-                <div className="flex gap-2">
+                <div className="flex gap-3 mt-4">
                    <button 
                     onClick={handleEvaluate}
                     disabled={(!recallText && !currentDrawing) || isSubmitting}
-                    className="btn-primary flex-1 py-4 text-[13px] font-bold uppercase tracking-widest disabled:opacity-40"
-                  >
-                    {isSubmitting ? "Evaluating..." : "Evaluate recall"}
-                  </button>
+                    className="w-full bg-primary text-primary-foreground py-4 rounded-[1.5rem] font-bold tracking-wide shadow-glow-purple disabled:opacity-40 transition-transform active:scale-[0.98] flex items-center justify-center"
+                   >
+                    {isSubmitting ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Verify Understanding"}
+                   </button>
                 </div>
               </div>
             </motion.div>
           ) : (
-            <motion.div key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 pb-10">
-              {/* Result Score Card */}
+            <motion.div key="result" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-6 pb-12">
+              {/* Result Head */}
               <div className={cn(
-                "card-md animate-in slide-in-from-bottom-2 duration-500",
-                result.evalResult.level === 'strong' ? "bg-success-light border-accent-green/20" : 
-                result.evalResult.level === 'medium' ? "bg-warning-light border-accent-yellow/20" : 
-                "bg-error-light border-accent-orange/20"
+                "rounded-[2rem] p-8 text-center shadow-lg border border-white/20 relative overflow-hidden",
+                result.evalResult.level === 'strong' ? "bg-accent-green" : 
+                result.evalResult.level === 'medium' ? "bg-accent-yellow" : 
+                "bg-accent-pink"
               )}>
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="text-[28px] leading-none">{result.evalResult.emoji}</span>
-                  <div>
-                    <h3 className="text-[15px] font-bold text-foreground leading-none">{result.evalResult.label}</h3>
-                    <p className="text-[11px] text-muted mt-1 uppercase tracking-wider font-bold">{result.evalResult.sublabel}</p>
-                  </div>
-                </div>
-                <p className="text-[12px] text-muted leading-relaxed italic">
-                  {result.evalResult.correction}
-                </p>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-[40px]" />
+                <span className="text-5xl block mb-4 relative z-10">{result.evalResult.emoji}</span>
+                <h3 className="text-xl font-bold text-background leading-tight relative z-10">{result.evalResult.label}</h3>
+                <p className="text-sm text-background/80 mt-2 font-medium relative z-10">{result.evalResult.correction}</p>
               </div>
 
-              {/* Your Answer Section */}
-              <div className="card-sm">
-                <p className="text-[12px] font-bold text-foreground mb-2">Your answer — keywords highlighted</p>
+              {/* Your Answer */}
+              <div className="bg-card rounded-[1.5rem] p-6 shadow-sm border border-white/10">
+                <p className="text-xs font-bold text-muted uppercase tracking-wider mb-4">Your Synthesis</p>
                 <div 
-                  className="bg-muted-bg/30 rounded-lg p-3 text-[13px] leading-relaxed mb-3 highlighted-answer"
+                  className="bg-secondary/50 rounded-xl p-4 text-sm leading-relaxed mb-4 highlighted-answer font-medium"
                   dangerouslySetInnerHTML={{ __html: result.evalResult.highlightedHtml }} 
                 />
-                <div className="flex flex-wrap gap-2 mt-2">
+                <div className="flex flex-wrap gap-2">
                   {result.evalResult.hitKeywords.map((kw: string) => (
-                    <span key={kw} className="badge-success">✓ {kw}</span>
+                    <span key={kw} className="bg-accent-green/10 text-accent-green px-3 py-1.5 rounded-full text-xs font-bold">✓ {kw}</span>
                   ))}
                   {result.evalResult.missKeywords.map((kw: string) => (
-                    <span key={kw} className="badge-error italic">✗ {kw}</span>
+                    <span key={kw} className="bg-accent-pink/10 text-accent-pink px-3 py-1.5 rounded-full text-xs font-bold">✗ {kw}</span>
                   ))}
                 </div>
               </div>
 
-              {/* Reference Truth */}
-              <div className="card-sm">
-                <p className="text-[12px] font-bold text-foreground mb-2">Reference Truth</p>
-                <p className="text-[12px] text-muted leading-relaxed">
-                  {currentAnchor.reference_answer}
-                </p>
+              {/* Reference */}
+              <div className="bg-card rounded-[1.5rem] p-6 shadow-sm border border-white/10">
+                <p className="text-xs font-bold text-muted uppercase tracking-wider mb-4">Core Definition</p>
+                <p className="text-sm font-medium leading-relaxed">{currentAnchor.reference_answer}</p>
               </div>
 
-              {/* Session Meta */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="card-sm p-3 text-center">
-                  <p className="text-[10px] text-muted uppercase font-bold mb-1">Depth</p>
-                  <p className="text-[12px] font-bold text-primary">{result.depthLabel}</p>
-                </div>
-                <div className="card-sm p-3 text-center">
-                  <p className="text-[10px] text-muted uppercase font-bold mb-1">Interval</p>
-                  <p className="text-[12px] font-bold text-accent-pink">+{result.newSRS.interval_days}d</p>
-                </div>
-                <div className="card-sm p-3 text-center">
-                   <p className="text-[10px] text-muted uppercase font-bold mb-1">Next</p>
-                   <p className="text-[12px] font-bold text-foreground">
-                    {new Date(result.nextDue || result.newSRS.due_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                   </p>
-                </div>
+              {/* Stats */}
+              <div className="flex gap-4">
+                 <div className="flex-1 bg-secondary rounded-[1.5rem] p-5 text-center">
+                    <p className="text-[10px] text-muted font-bold uppercase tracking-widest mb-1">Interval</p>
+                    <p className="text-lg font-bold text-primary">+{result.newSRS.interval_days}d</p>
+                 </div>
+                 <div className="flex-1 bg-secondary rounded-[1.5rem] p-5 text-center">
+                    <p className="text-[10px] text-muted font-bold uppercase tracking-widest mb-1">Next Due</p>
+                    <p className="text-lg font-bold text-foreground">
+                      {new Date(result.nextDue || result.newSRS.due_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    </p>
+                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-4">
-                <button 
-                  onClick={() => setPhase('input')}
-                  className="btn-outline flex-1 py-4 text-[13px] font-bold uppercase tracking-widest"
-                >
-                  Retry
-                </button>
-                <button 
-                  onClick={nextAnchor}
-                  className="btn-primary flex-[2] py-4 text-[13px] font-bold uppercase tracking-widest"
-                >
-                  Next Anchor →
-                </button>
-              </div>
+              {/* Next Action */}
+              <button 
+                onClick={nextAnchor}
+                className="w-full bg-foreground text-background py-5 rounded-[1.5rem] font-bold shadow-xl flex items-center justify-center gap-2 mt-4 active:scale-[0.98] transition-transform"
+              >
+                Continue Concept <ChevronLeft size={18} className="rotate-180" />
+              </button>
             </motion.div>
           )}
         </AnimatePresence>
       </main>
 
+      {/* Legacy modals (hidden cleanly by layout logic) */}
       {showDrawingPad && (
         <DrawingPad 
           onSave={(data) => {

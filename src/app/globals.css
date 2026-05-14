@@ -1,25 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8f7f5;
-  --foreground: #1f1d1a;
+  --background: #fdfcff;
+  --foreground: #1c1c1e;
   --card: #ffffff;
-  --muted: #8b8680;
-  --muted-light: #d4cfc7;
-  --muted-bg: #f3ede8;
-  --border: #e8e3d8;
-  --secondary: #f3ede8;
+  --muted: #8e8e93;
+  --muted-light: #e5e5ea;
+  --muted-bg: #f2f2f7;
+  --border: #e5e5ea;
+  --secondary: #f2f2f7;
 }
 
 .dark {
-  --background: #121212;
-  --foreground: #f8f7f5;
-  --card: #1e1e1e;
-  --muted: #a1a1aa;
-  --muted-light: #3f3f46;
-  --muted-bg: #27272a;
-  --border: #3f3f46;
-  --secondary: #27272a;
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #1c1c1e;
+  --muted: #98989d;
+  --muted-light: #3a3a3c;
+  --muted-bg: #2c2c2e;
+  --border: #3a3a3c;
+  --secondary: #2c2c2e;
 }
 
 @theme {
@@ -28,55 +28,51 @@
   --font-serif: 'DM Serif Display', serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Primary Colors - Purple gradient system */
-  --color-primary: #7c6fcd;       /* Deep purple — main brand color */
-  --color-primary-light: #b8b0e8;  /* Medium purple — hover states */
-  --color-primary-lighter: #e8e4f5; /* Light purple — backgrounds */
-  --color-primary-foreground: #ffffff;
+  /* Primary Colors - Lavender / Soft Purple */
+  --color-primary: #a494f6;       /* Soft lavender */
+  --color-primary-light: #c8bbf8;  /* Lighter lavender */
+  --color-primary-lighter: #eaddff; /* Very light background */
+  --color-primary-foreground: #1c1c1e;
 
-  /* Accent Colors - Vibrant supporting palette */
-  --color-accent-pink: #f472b6;    /* Hot pink — CTAs, highlights */
-  --color-accent-yellow: #fbbf24;  /* Amber yellow — warnings, secondary */
-  --color-accent-green: #10b981;   /* Emerald green — success, confirm */
-  --color-accent-cyan: #06b6d4;    /* Cyan — info, secondary accent */
-  --color-accent-orange: #f97316;  /* Orange — alerts, destructive actions */
+  /* Accent Colors - Pastel Palette */
+  --color-accent-pink: #ff7e8d;    /* Soft pink */
+  --color-accent-green: #8ae2c4;   /* Soft mint green */
+  --color-accent-cyan: #68e1fd;    /* Soft cyan/blue */
+  --color-accent-yellow: #f8c354;  /* Soft amber yellow */
+  --color-accent-orange: #ff9f76;  /* Soft orange */
 
-  /* Neutral Colors - Clean grayscale */
-  --color-secondary: var(--secondary);      /* Map secondary to muted-bg for compatibility */
-  --color-background: var(--background);     /* Off-white page background */
-  --color-card: var(--card);           /* Pure white cards */
-  --color-foreground: var(--foreground);     /* Near black text */
-  --color-muted: var(--muted);          /* Medium gray — secondary text */
-  --color-muted-light: var(--muted-light);    /* Light gray — borders, dividers */
-  --color-muted-bg: var(--muted-bg);       /* Very light gray — input backgrounds */
-  --color-border: var(--border);         /* Subtle card borders */
+  /* Neutral Colors */
+  --color-secondary: var(--secondary);
+  --color-background: var(--background);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-light: var(--muted-light);
+  --color-muted-bg: var(--muted-bg);
+  --color-border: var(--border);
 
   /* Semantic Colors */
-  --color-success: #10b981;
-  --color-success-light: #d1fae5;
-  --color-warning: #f59e0b;
-  --color-warning-light: #fef3c7;
-  --color-error: #ef4444;
-  --color-error-light: #fee2e2;
-  --color-info: #3b82f6;
-  --color-info-light: #dbeafe;
+  --color-success: #8ae2c4;
+  --color-warning: #f8c354;
+  --color-error: #ff7e8d;
+  --color-info: #68e1fd;
 
-  /* Border Radius - Generous, modern curves */
-  --radius-full: 9999px;           /* Fully rounded */
-  --radius-xl: 24px;               /* Extra large rounded cards */
-  --radius-lg: 18px;               /* Large rounded elements */
-  --radius-md: 14px;               /* Medium rounded buttons */
-  --radius-sm: 10px;               /* Small inputs and subtle rounds */
-  --radius-xs: 6px;                /* Minimal rounding */
+  /* Border Radius - Very Rounded */
+  --radius-full: 9999px;
+  --radius-xl: 32px;
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+  --radius-xs: 8px;
 
-  /* Shadows - Soft, elegant depth */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.03);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.08), 0 4px 6px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04);
-  --shadow-glow-purple: 0 8px 20px rgba(124, 111, 205, 0.25);
-  --shadow-glow-pink: 0 8px 20px rgba(244, 114, 182, 0.25);
+  /* Shadows - Soft */
+  --shadow-xs: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 16px 32px rgba(0, 0, 0, 0.1);
+  --shadow-glow-purple: 0 0 20px rgba(164, 148, 246, 0.3);
+  --shadow-glow-pink: 0 0 20px rgba(255, 126, 141, 0.3);
+  --shadow-glow-cyan: 0 0 20px rgba(104, 225, 253, 0.3);
 
   /* Spacing - Tailwind default + custom */
   --spacing-0: 0;
@@ -231,63 +227,6 @@
   /* Icon Button */
   .btn-icon {
     @apply inline-flex items-center justify-center gap-2 rounded-full font-medium text-sm cursor-pointer transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed w-10 h-10 p-0;
-  }
-
-  /* Badges & Tags */
-  .badge {
-    @apply inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium;
-  }
-
-  .badge-primary {
-    @apply inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-primary-lighter text-primary;
-  }
-
-  .badge-success {
-    @apply inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-success-light text-accent-green;
-  }
-
-  .badge-warning {
-    @apply inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-warning-light text-accent-yellow;
-  }
-
-  .badge-error {
-    @apply inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-error-light text-accent-orange;
-  }
-
-  .badge-info {
-    @apply inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-info-light text-info;
-  }
-
-  /* Anchor/Hero Card */
-  .anchor-card {
-    @apply bg-gradient-to-br from-primary to-primary-light rounded-[--radius-lg] p-8 text-white relative overflow-hidden shadow-[--shadow-glow-purple];
-  }
-
-  .anchor-card::before {
-    content: '';
-    @apply absolute inset-0 opacity-20;
-    background: radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.3), transparent 70%);
-  }
-
-  /* Alert/Callout */
-  .alert {
-    @apply rounded-[--radius-lg] p-5 border border-l-4 flex gap-3 items-start;
-  }
-
-  .alert-info {
-    @apply bg-info-light border-info text-info;
-  }
-
-  .alert-success {
-    @apply bg-success-light border-accent-green text-accent-green;
-  }
-
-  .alert-warning {
-    @apply bg-warning-light border-accent-yellow text-accent-yellow;
-  }
-
-  .alert-error {
-    @apply bg-error-light border-accent-orange text-accent-orange;
   }
 
   /* Chip/Pill */
