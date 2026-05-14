@@ -35,7 +35,8 @@ export function useAnchors(deckId: string) {
         word: newAnchor.word,
         hint: newAnchor.hint,
         reference_answer: newAnchor.reference_answer,
-        level: 'A1'
+        level: 'A1',
+        keywords: []
       }).select().single();
       if (error) throw error;
       return data;

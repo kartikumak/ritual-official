@@ -75,7 +75,7 @@ export default function MarketplacePage() {
           word: a.word,
           hint: a.hint,
           level: a.level,
-          keywords: a.keywords,
+          keywords: a.keywords || [],
           reference_answer: a.reference_answer
         }));
 
