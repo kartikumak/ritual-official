@@ -20,7 +20,7 @@ export default function TermsPage() {
         
         <h3 className="text-foreground font-bold mt-6">1. Acceptance</h3>
         <p>
-          By accessing or using Rituals, you agree to be bound by these Terms of Service. If you do not agree, please do not use the application.
+          By accessing or using inLucid, you agree to be bound by these Terms of Service. If you do not agree, please do not use the application.
         </p>
 
         <h3 className="text-foreground font-bold mt-6">2. Use of Service</h3>
@@ -30,7 +30,7 @@ export default function TermsPage() {
 
         <h3 className="text-foreground font-bold mt-6">3. Content</h3>
         <p>
-          You retain all rights to the data and concepts you input into Rituals. However, you grant us a license to store and process this data as necessary to provide the service.
+          You retain all rights to the data and concepts you input into inLucid. However, you grant us a license to store and process this data as necessary to provide the service.
         </p>
 
         <h3 className="text-foreground font-bold mt-6">4. Termination</h3>
@@ -40,7 +40,7 @@ export default function TermsPage() {
 
         <h3 className="text-foreground font-bold mt-6">5. Limitation of Liability</h3>
         <p>
-          Rituals is provided "as is". We make no warranties regarding the accuracy or availability of the service. We shall not be liable for any indirect or consequential damages.
+          inLucid is provided "as is". We make no warranties regarding the accuracy or availability of the service. We shall not be liable for any indirect or consequential damages.
         </p>
 
         <div className="mt-12 pt-8 border-t border-border text-center">

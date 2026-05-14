@@ -9,7 +9,7 @@ import { AuthProvider } from "@/src/context/AuthContext";
 import { ThemeProvider } from "@/src/components/ThemeProvider";
 
 export const metadata: Metadata = {
-  title: "Rituals — Spaced Repetition Mastery",
+  title: "inLucid — Spaced Repetition Mastery",
   description: "Anchor your knowledge with spaced repetition and concept recall.",
 };
 

@@ -14,7 +14,7 @@ export default function AboutPage() {
         <button onClick={() => router.back()} className="w-8 h-8 rounded-full bg-muted/20 flex items-center justify-center">
           <ChevronLeft size={18} />
         </button>
-        <h1 className="text-xl font-serif font-bold">About Rituals</h1>
+        <h1 className="text-xl font-serif font-bold">About inLucid</h1>
       </header>
 
       <div className="px-6 space-y-12">
@@ -24,7 +24,7 @@ export default function AboutPage() {
           </div>
           <h2 className="text-3xl font-serif font-bold mb-4 italic">Belief in Depth.</h2>
           <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
-            Rituals is built on the principle that true knowledge isn't found in quick scrolls, but in deliberate recall and scientific repetition.
+            inLucid is built on the principle that true knowledge isn't found in quick scrolls, but in deliberate recall and scientific repetition.
           </p>
         </section>
 
@@ -41,7 +41,7 @@ export default function AboutPage() {
             <Zap className="text-primary mb-3" size={24} />
             <h3 className="text-sm font-bold mb-2">The Memory Fade System</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              As you master a concept, Rituals gradually reduces the assistance shown to you. Previous responses fade away as your autonomy grows, ensuring your brain does the heavy lifting required for true long-term anchoring.
+              As you master a concept, inLucid gradually reduces the assistance shown to you. Previous responses fade away as your autonomy grows, ensuring your brain does the heavy lifting required for true long-term anchoring.
             </p>
           </div>
 
@@ -49,7 +49,7 @@ export default function AboutPage() {
             <Heart className="text-primary mb-3" size={24} />
             <h3 className="text-sm font-bold mb-2">Made by Kartik</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Rituals is a labor of love by Kartik, designed for those who value understanding over information. A tool for the curious, the studious, and the obsessive.
+              inLucid is a labor of love by Kartik, designed for those who value understanding over information. A tool for the curious, the studious, and the obsessive.
             </p>
           </div>
         </div>

@@ -60,7 +60,7 @@ export default function LoginPage() {
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent-cyan/10 rounded-full blur-[100px] mix-blend-multiply dark:mix-blend-screen -z-10" />
       
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-10 text-center z-10 w-full max-w-sm">
-        <h1 className="text-3xl font-serif font-normal text-foreground mb-2">Rituals</h1>
+        <h1 className="text-3xl font-serif font-normal text-foreground mb-2">inLucid</h1>
         <p className="text-muted text-sm font-medium">Concept reflection and mastery</p>
       </motion.div>
 
@@ -151,7 +151,7 @@ export default function LoginPage() {
               {isSubmitting ? (
                  <div className="w-5 h-5 border-2 border-background/30 border-t-background rounded-full animate-spin" />
               ) : (
-                 <>{isSignUp ? 'Join Rituals' : 'Continue'} <ArrowRight size={18} /></>
+                 <>{isSignUp ? 'Join inLucid' : 'Continue'} <ArrowRight size={18} /></>
               )}
             </button>
           </form>

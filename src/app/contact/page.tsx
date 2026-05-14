@@ -9,7 +9,7 @@ export default function ContactPage() {
   const [message, setMessage] = useState("");
 
   const handleSend = () => {
-    window.location.href = `mailto:support@rituals.app?body=${encodeURIComponent(message)}`;
+    window.location.href = `mailto:support@inlucid.app?body=${encodeURIComponent(message)}`;
   };
 
   return (
@@ -61,7 +61,7 @@ export default function ContactPage() {
         </section>
 
         <footer className="text-center pt-8">
-          <p className="text-[10px] text-muted-foreground italic">Rituals — Engineering Depth Since 2026</p>
+          <p className="text-[10px] text-muted-foreground italic">inLucid — Engineering Depth Since 2026</p>
         </footer>
       </div>
     </div>

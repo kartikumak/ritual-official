@@ -81,7 +81,7 @@ export default function MarketplacePage() {
         await supabase.from('anchors').insert(anchorsToInsert);
       }
 
-      alert("Collection anchored to your rituals!");
+      alert("Collection anchored to your study space!");
       router.push('/');
     } catch (err: any) {
       alert("Import failed: " + err.message);
@@ -159,7 +159,7 @@ export default function MarketplacePage() {
              <div className="w-20 h-20 rounded-full bg-muted-bg flex items-center justify-center mx-auto mb-6">
                <ShoppingBag size={40} className="text-muted/30" />
              </div>
-             <h3 className="text-2xl font-serif font-bold mb-2">No Rituals Manifested</h3>
+             <h3 className="text-2xl font-serif font-bold mb-2">No Concepts Manifested</h3>
              <p className="text-xs font-medium text-muted uppercase tracking-widest">Your search currently exists in a void.</p>
           </div>
         ) : (
@@ -187,7 +187,7 @@ export default function MarketplacePage() {
                   </h3>
                   
                   <p className="text-xs text-muted leading-relaxed line-clamp-4">
-                    {deck.description || "Synthesize this domain of knowledge through structured anchoring rituals."}
+                    {deck.description || "Synthesize this domain of knowledge through structured anchoring sessions."}
                   </p>
                 </div>
 

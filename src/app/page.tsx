@@ -101,7 +101,7 @@ export default function Home() {
              <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-primary to-accent-cyan flex shadow-glow-purple" />
           </div>
           <h1 className="text-4xl md:text-5xl font-serif font-normal text-foreground leading-tight tracking-tight mb-4">
-            Welcome to Rituals
+            Welcome to inLucid
           </h1>
           <p className="text-base font-medium text-muted mb-10 max-w-sm mx-auto">
             A modern space for reflection, active recall, and deep concept understanding.
@@ -176,7 +176,7 @@ export default function Home() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 className="bg-card hover:bg-card/80 rounded-[2rem] p-6 shadow-sm border border-border/50 transition-all group flex items-center justify-between"
               >
-                <div className="flex-1 pr-4" onClick={() => router.push(`/study/${deck.id}`)} style={{ cursor: 'pointer' }}>
+                <div className="flex-1 pr-4" onClick={() => router.push(`/deck/${deck.id}`)} style={{ cursor: 'pointer' }}>
                   <h3 className="text-lg font-bold text-foreground mb-1">{deck.name}</h3>
                   <p className="text-sm text-muted line-clamp-1">{deck.description || "A collection of concepts to reflect on."}</p>
                   <div className="flex items-center gap-3 mt-3">
@@ -189,7 +189,7 @@ export default function Home() {
                   <button onClick={(e) => deleteDeck(deck.id, e)} className="text-muted/40 hover:text-accent-pink transition-colors p-2">
                     <Trash2 size={18} />
                   </button>
-                  <Link href={`/study/${deck.id}`} className="w-12 h-12 rounded-full bg-secondary text-foreground flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
+                  <Link href={`/deck/${deck.id}`} className="w-12 h-12 rounded-full bg-secondary text-foreground flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
                     <ArrowRight size={20} />
                   </Link>
                 </div>

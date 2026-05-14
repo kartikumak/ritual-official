@@ -20,7 +20,7 @@ export default function PrivacyPage() {
         
         <h3 className="text-foreground font-bold mt-6">1. Data Collection</h3>
         <p>
-          We collect personal information that you provide to us, such as your name and email address when you create an account. This information is used solely to provide and improve the Rituals experience.
+          We collect personal information that you provide to us, such as your name and email address when you create an account. This information is used solely to provide and improve the inLucid experience.
         </p>
 
         <h3 className="text-foreground font-bold mt-6">2. Usage Data</h3>
