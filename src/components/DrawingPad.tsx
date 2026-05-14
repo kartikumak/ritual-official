@@ -87,7 +87,7 @@ export default function DrawingPad({ onSave, onClose }: DrawingPadProps) {
 
   const handleSave = () => {
     if (!canvasRef.current) return;
-    const data = canvasRef.current.toDataURL();
+    const data = canvasRef.current.toDataURL('image/jpeg', 0.5);
     onSave(data);
   };
 

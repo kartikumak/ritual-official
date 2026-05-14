@@ -1,86 +1,54 @@
 'use client';
 
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, User, Plus, Trash2, ArrowRight, Activity, Zap, Mic } from "lucide-react";
-import { useState, useEffect } from "react";
+import { BookOpen, User, Plus, Trash2, ArrowRight, Activity, Mic } from "lucide-react";
+import { useState } from "react";
 import { cn, getInitials } from "@/src/lib/utils";
 import { useAuth } from "@/src/context/AuthContext";
-import { getSupabase } from "@/src/lib/supabase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ThemeToggle } from "@/src/components/ThemeToggle";
+import { useDecks } from "@/src/hooks/useDecks";
+import { useProfile } from "@/src/hooks/useProfile";
+import { toast } from "sonner";
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
-  const [profile, setProfile] = useState<any>(null);
-  const [decks, setDecks] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { decks, isLoading: decksLoading, createDeck, isCreating, deleteDeck } = useDecks();
+  const { profile, stats, isLoading: profileLoading } = useProfile();
+  
   const [showNewDeckModal, setShowNewDeckModal] = useState(false);
   const [newDeck, setNewDeck] = useState({ name: '', description: '', category: 'General' });
-  const [stats, setStats] = useState({ total: 0, weekly: 0 });
 
-  const supabase = getSupabase();
   const router = useRouter();
 
-  useEffect(() => {
-    if (user && !authLoading) {
-      fetchData();
-    } else if (!authLoading && !user) {
-      setLoading(false);
+  const handleCreateDeck = () => {
+    if (!newDeck.name) {
+      toast.error("Please provide a name for your concept collection.");
+      return;
     }
-  }, [user, authLoading]);
-
-  const fetchData = async () => {
-    if (!user) return;
-    setLoading(true);
-    try {
-      let { data: profileData } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-      if (!profileData) {
-        const { data: newProfile } = await supabase.from('profiles').insert({
-          id: user.id, email: user.email, name: user.user_metadata?.name || user.email?.split('@')[0] || 'Explorer'
-        }).select().single();
-        profileData = newProfile;
+    createDeck(newDeck, {
+      onSuccess: () => {
+        setShowNewDeckModal(false);
+        setNewDeck({ name: '', description: '', category: 'General' });
       }
-      if (profileData) setProfile(profileData);
-
-      const { data: decksData } = await supabase.from('decks').select('*, anchors(id)').eq('user_id', user.id);
-      setDecks(decksData?.map(d => ({ ...d, anchorCount: d.anchors?.length || 0 })) || []);
-
-      const { data: logs } = await supabase.from('review_logs').select('reviewed_at').eq('user_id', user.id);
-      if (logs) {
-        setStats({ 
-          total: logs.length, 
-          weekly: logs.filter(l => new Date(l.reviewed_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length 
-        });
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCreateDeck = async () => {
-    if (!newDeck.name || !user) return;
-    const { error } = await supabase.from('decks').insert({
-      user_id: user.id, name: newDeck.name, description: newDeck.description, category: newDeck.category, is_public: false
     });
-    if (!error) {
-      setShowNewDeckModal(false);
-      setNewDeck({ name: '', description: '', category: 'General' });
-      fetchData();
-    }
   };
 
-  const deleteDeck = async (id: string, e: React.MouseEvent) => {
+  const handleDeleteDeck = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if(confirm("Are you sure you want to delete this deck?")) {
-      await supabase.from('decks').delete().eq('id', id);
-      fetchData();
-    }
+    toast('Delete this collection?', {
+      action: {
+        label: 'Confirm',
+        onClick: () => deleteDeck(id),
+      },
+      cancel: { label: 'Cancel', onClick: () => {} }
+    });
   };
 
-  if (authLoading || loading) {
+  const loading = authLoading || (user && (decksLoading || profileLoading));
+
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
@@ -124,9 +92,6 @@ export default function Home() {
         {/* Header */}
         <header className="flex items-center justify-between mb-12">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-            <p className="text-xs font-bold uppercase tracking-widest text-muted mb-1 flex items-center gap-2">
-              <Zap size={14} className="text-accent-yellow" /> Activity Pulse
-            </p>
             <h1 className="text-3xl font-serif text-foreground">Hi, {profile?.name || "Learner"}</h1>
           </motion.div>
           <div className="flex items-center gap-4">
@@ -148,12 +113,12 @@ export default function Home() {
            <div className="bg-card rounded-[2rem] p-6 shadow-sm border border-border/50 relative overflow-hidden group">
              <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-primary/5 rounded-full group-hover:bg-primary/10 transition-colors" />
              <p className="text-xs font-bold uppercase text-muted tracking-wider mb-2">Total Recalls</p>
-             <p className="text-4xl font-bold text-primary">{stats.total}</p>
+             <p className="text-4xl font-bold text-primary">{stats?.total || 0}</p>
            </div>
            <div className="bg-card rounded-[2rem] p-6 shadow-sm border border-border/50 relative overflow-hidden group">
              <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-accent-cyan/5 rounded-full group-hover:bg-accent-cyan/10 transition-colors" />
              <p className="text-xs font-bold uppercase text-muted tracking-wider mb-2">This Week</p>
-             <p className="text-4xl font-bold text-accent-cyan">{stats.weekly}</p>
+             <p className="text-4xl font-bold text-accent-cyan">{stats?.weekly || 0}</p>
            </div>
         </motion.div>
 
@@ -186,7 +151,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-3">
-                  <button onClick={(e) => deleteDeck(deck.id, e)} className="text-muted/40 hover:text-accent-pink transition-colors p-2">
+                  <button onClick={(e) => handleDeleteDeck(deck.id, e)} className="text-muted/40 hover:text-accent-pink transition-colors p-2">
                     <Trash2 size={18} />
                   </button>
                   <Link href={`/deck/${deck.id}`} className="w-12 h-12 rounded-full bg-secondary text-foreground flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
@@ -215,7 +180,7 @@ export default function Home() {
              <BookOpen size={22} className="stroke-[2.5]" />
              <span className="text-[9px] font-bold uppercase tracking-wider">Learn</span>
            </Link>
-           <button className="flex flex-col items-center gap-1 text-muted hover:text-foreground transition-colors" onClick={() => alert("Voice Rooms coming soon. (Simplifying architecture)")}>
+           <button className="flex flex-col items-center gap-1 text-muted hover:text-foreground transition-colors" onClick={() => toast.info("Voice Rooms coming soon. (Simplifying architecture)")}>
              <Mic size={22} className="stroke-[2]" />
              <span className="text-[9px] font-bold uppercase tracking-wider">Rooms</span>
            </button>
@@ -248,7 +213,9 @@ export default function Home() {
               </div>
               <div className="flex gap-3">
                 <button onClick={() => setShowNewDeckModal(false)} className="flex-1 py-4 text-sm font-bold text-muted hover:text-foreground rounded-2xl transition-colors">Cancel</button>
-                <button onClick={handleCreateDeck} disabled={!newDeck.name} className="flex-1 py-4 text-sm font-bold bg-foreground text-background rounded-2xl shadow-lg disabled:opacity-50">Create</button>
+                <button onClick={handleCreateDeck} disabled={!newDeck.name || isCreating} className="flex-1 py-4 text-sm font-bold bg-foreground text-background rounded-2xl shadow-lg disabled:opacity-50">
+                  {isCreating ? 'Creating...' : 'Create'}
+                </button>
               </div>
             </motion.div>
           </motion.div>

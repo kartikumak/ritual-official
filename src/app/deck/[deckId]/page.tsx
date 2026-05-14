@@ -2,74 +2,49 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, Plus, Play, Trash2 } from "lucide-react";
-import { useState, useEffect, use } from "react";
+import { useState, use } from "react";
 import { useAuth } from "@/src/context/AuthContext";
-import { getSupabase } from "@/src/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useAnchors } from "@/src/hooks/useAnchors";
+import { toast } from "sonner";
 
 export default function DeckDetailsPage({ params }: { params: Promise<{ deckId: string }> }) {
   const { deckId } = use(params);
   const { user, loading: authLoading } = useAuth();
-  const [deck, setDeck] = useState<any>(null);
-  const [anchors, setAnchors] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  
+  const { deck, anchors, isLoading, createAnchor, isCreating, deleteAnchor } = useAnchors(deckId);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newAnchor, setNewAnchor] = useState({ word: '', hint: '', reference_answer: '' });
-  const [isSaving, setIsSaving] = useState(false);
 
-  const supabase = getSupabase();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!authLoading && !user) router.push('/login');
-    if (user) fetchData();
-  }, [user, authLoading]);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const { data: deckData } = await supabase.from('decks').select('*').eq('id', deckId).single();
-      setDeck(deckData);
-      
-      const { data: anchorsData } = await supabase.from('anchors').select('*').eq('deck_id', deckId).order('created_at', { ascending: false });
-      setAnchors(anchorsData || []);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+  const handleCreateAnchor = () => {
+    if (!newAnchor.word || !newAnchor.reference_answer) {
+      toast.error("Please provide both a concept and a reference answer.");
+      return;
     }
-  };
-
-  const handleCreateAnchor = async () => {
-    if (!newAnchor.word || !newAnchor.reference_answer) return;
-    setIsSaving(true);
-    const { error } = await supabase.from('anchors').insert({
-      deck_id: deckId,
-      word: newAnchor.word,
-      hint: newAnchor.hint,
-      reference_answer: newAnchor.reference_answer,
-      level: 'A1'
+    
+    createAnchor(newAnchor, {
+      onSuccess: () => {
+        setShowAddModal(false);
+        setNewAnchor({ word: '', hint: '', reference_answer: '' });
+      }
     });
-    setIsSaving(false);
-    if (!error) {
-      setShowAddModal(false);
-      setNewAnchor({ word: '', hint: '', reference_answer: '' });
-      fetchData();
-    } else {
-      alert("Error adding concept: " + error.message);
-    }
   };
 
-  const deleteAnchor = async (id: string, e: React.MouseEvent) => {
+  const handleDeleteAnchor = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if(confirm("Delete this concept?")) {
-      await supabase.from('anchors').delete().eq('id', id);
-      fetchData();
-    }
+    toast('Delete this concept?', {
+      action: {
+        label: 'Confirm',
+        onClick: () => deleteAnchor(id),
+      },
+      cancel: { label: 'Cancel', onClick: () => {} }
+    });
   };
 
-  if (loading || authLoading) return (
+  if (isLoading || authLoading) return (
     <div className="flex items-center justify-center min-h-screen bg-background">
       <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
     </div>
@@ -109,7 +84,7 @@ export default function DeckDetailsPage({ params }: { params: Promise<{ deckId: 
           </div>
 
           <AnimatePresence>
-            {anchors.map(anchor => (
+            {anchors.map((anchor: any) => (
               <motion.div 
                 key={anchor.id}
                 layout
@@ -120,7 +95,7 @@ export default function DeckDetailsPage({ params }: { params: Promise<{ deckId: 
               >
                 <div className="flex justify-between items-start">
                   <h3 className="text-xl font-serif font-bold">{anchor.word}</h3>
-                  <button onClick={(e) => deleteAnchor(anchor.id, e)} className="text-muted/40 hover:text-accent-pink transition-colors">
+                  <button onClick={(e) => handleDeleteAnchor(anchor.id, e)} className="text-muted/40 hover:text-accent-pink transition-colors">
                     <Trash2 size={16} />
                   </button>
                 </div>
@@ -166,8 +141,8 @@ export default function DeckDetailsPage({ params }: { params: Promise<{ deckId: 
               </div>
               <div className="flex gap-3">
                 <button onClick={() => setShowAddModal(false)} className="flex-1 py-4 text-sm font-bold text-muted hover:text-foreground rounded-2xl transition-colors">Cancel</button>
-                <button onClick={handleCreateAnchor} disabled={!newAnchor.word || !newAnchor.reference_answer || isSaving} className="flex-1 py-4 text-sm font-bold bg-foreground text-background rounded-2xl shadow-lg disabled:opacity-50">
-                  {isSaving ? "Saving..." : "Create"}
+                <button onClick={handleCreateAnchor} disabled={!newAnchor.word || !newAnchor.reference_answer || isCreating} className="flex-1 py-4 text-sm font-bold bg-foreground text-background rounded-2xl shadow-lg disabled:opacity-50">
+                  {isCreating ? "Saving..." : "Create"}
                 </button>
               </div>
             </motion.div>

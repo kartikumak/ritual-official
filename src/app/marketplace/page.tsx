@@ -7,6 +7,7 @@ import { useAuth } from "@/src/context/AuthContext";
 import { getSupabase } from "@/src/lib/supabase";
 import { useRouter } from "next/navigation";
 import { cn } from "@/src/lib/utils";
+import { toast } from "sonner";
 
 export default function MarketplacePage() {
   const { user, loading: authLoading } = useAuth();
@@ -69,7 +70,7 @@ export default function MarketplacePage() {
 
       // 3. Insert them into the new deck
       if (anchors && anchors.length > 0) {
-        const anchorsToInsert = anchors.map(a => ({
+        const anchorsToInsert = anchors.map((a: any) => ({
           deck_id: newDeck.id,
           word: a.word,
           hint: a.hint,
@@ -81,10 +82,10 @@ export default function MarketplacePage() {
         await supabase.from('anchors').insert(anchorsToInsert);
       }
 
-      alert("Collection anchored to your study space!");
+      toast.success("Collection anchored to your study space!");
       router.push('/');
     } catch (err: any) {
-      alert("Import failed: " + err.message);
+      toast.error("Import failed: " + err.message);
     }
   };
 

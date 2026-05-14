@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { getSupabase } from '@/src/lib/supabase';
 import { motion } from 'framer-motion';
 import { Orbit, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
@@ -31,7 +32,7 @@ export default function ResetPasswordPage() {
 
       if (error) throw error;
       
-      alert('Password updated successfully!');
+      toast.success('Password updated successfully!');
       router.push('/');
     } catch (err: any) {
       setError(err.message);

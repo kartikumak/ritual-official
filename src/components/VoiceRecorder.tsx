@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import { Mic, Square, Play, Trash2, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from "@/src/lib/utils";
+import { toast } from "sonner";
 
 interface VoiceRecorderProps {
   onSave: (url: string) => void;
@@ -37,7 +38,7 @@ export default function VoiceRecorder({ onSave, onClose }: VoiceRecorderProps) {
       setIsRecording(true);
     } catch (err) {
       console.error('Error accessing microphone:', err);
-      alert('Microphone access is required for audio recording.');
+      toast.error('Microphone access is required for audio recording.');
     }
   };
 

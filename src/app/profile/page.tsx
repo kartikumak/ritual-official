@@ -4,18 +4,18 @@ import { motion } from "framer-motion";
 import { ChevronLeft, Camera, LogOut, BookOpen, Activity, Target } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/src/context/AuthContext";
-import { getSupabase } from "@/src/lib/supabase";
 import { useRouter } from "next/navigation";
-import { getInitials, cn } from "@/src/lib/utils";
+import { getInitials } from "@/src/lib/utils";
 import Link from "next/link";
+import { useProfile } from "@/src/hooks/useProfile";
+import { toast } from "sonner";
 
 export default function ProfilePage() {
   const { user, signOut, loading: authLoading } = useAuth();
-  const [profile, setProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  
+  const { profile, stats, isLoading: profileLoading, updateProfile, isUpdating } = useProfile();
+  
   const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [stats, setStats] = useState({ totalRecalls: 0, activeDecks: 0, streak: 0 });
   const [formData, setFormData] = useState({
     name: '',
     bio: '',
@@ -23,72 +23,51 @@ export default function ProfilePage() {
     avatar_url: '',
   });
 
-  const supabase = getSupabase();
   const router = useRouter();
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login');
-    if (user) fetchProfile();
   }, [user, authLoading]);
 
-  const fetchProfile = async () => {
-    try {
-      const { data } = await supabase.from('profiles').select('*').eq('id', user?.id).single();
-      const { count: anchorsCount } = await supabase.from('review_logs').select('*', { count: 'exact', head: true }).eq('user_id', user?.id);
-      const { count: decksCount } = await supabase.from('decks').select('*', { count: 'exact', head: true }).eq('user_id', user?.id);
-      // Rough streak simulation based on weekly goal if active
-      
-      if (data) {
-        setProfile(data);
-        setStats({
-          totalRecalls: anchorsCount || 0,
-          activeDecks: decksCount || 0,
-          streak: Math.floor((anchorsCount || 0) / 10) // Just a placeholder formula
-        });
-        setFormData({
-          name: data.name || data.display_name || '',
-          bio: data.bio || '',
-          learning_languages: data.learning_languages ? data.learning_languages.join(', ') : '',
-          avatar_url: data.avatar_url || '',
-        });
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        name: profile.name || profile.display_name || '',
+        bio: profile.bio || '',
+        learning_languages: profile.learning_languages ? profile.learning_languages.join(', ') : '',
+        avatar_url: profile.avatar_url || '',
+      });
     }
-  };
+  }, [profile]);
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) return alert("Image should be less than 2MB");
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("Image should be less than 2MB");
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => setFormData({ ...formData, avatar_url: reader.result as string });
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    const { error } = await supabase.from('profiles').update({
+  const handleSave = () => {
+    updateProfile({
       name: formData.name,
       display_name: formData.name,
       bio: formData.bio,
-      learning_languages: formData.learning_languages.split(',').map(s => s.trim()).filter(Boolean),
+      learning_languages: formData.learning_languages.split(',').map((s: string) => s.trim()).filter(Boolean),
       avatar_url: formData.avatar_url,
-    }).eq('id', user?.id as string);
-
-    if (!error) {
-      setIsEditing(false);
-      fetchProfile();
-    } else {
-      alert("Update failed: " + error.message);
-    }
-    setIsSaving(false);
+    }, {
+      onSuccess: () => {
+        setIsEditing(false);
+      }
+    });
   };
 
-  if (loading) return (
+  if (profileLoading || authLoading) return (
     <div className="flex items-center justify-center min-h-screen bg-background">
       <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
     </div>
@@ -152,8 +131,12 @@ export default function ProfilePage() {
                  className="w-full bg-secondary border border-transparent rounded-[1.5rem] px-5 py-3 text-sm text-center outline-none focus:border-primary/30"
                  placeholder="Subjects (e.g. Math, Biology)"
               />
-              <button onClick={handleSave} disabled={isSaving} className="w-full py-4 bg-primary text-white rounded-[1.5rem] font-bold shadow-glow-purple disabled:opacity-50 mt-4 text-sm">
-                {isSaving ? "Saving..." : "Save Identity"}
+              <button 
+                onClick={handleSave} 
+                disabled={isUpdating} 
+                className="w-full py-4 bg-primary text-primary-foreground rounded-[1.5rem] font-bold shadow-glow-purple disabled:opacity-50 mt-4 text-sm"
+              >
+                {isUpdating ? "Saving..." : "Save Identity"}
               </button>
             </div>
           ) : (
@@ -183,21 +166,21 @@ export default function ProfilePage() {
                <div className="w-10 h-10 rounded-full bg-accent-cyan/10 text-accent-cyan flex items-center justify-center mx-auto mb-3">
                  <Activity size={18} />
                </div>
-               <p className="text-3xl font-bold text-foreground mb-1">{stats.totalRecalls}</p>
+               <p className="text-3xl font-bold text-foreground mb-1">{stats?.total || 0}</p>
                <p className="text-[10px] uppercase font-bold tracking-widest text-muted">Total Recalls</p>
              </div>
              <div className="bg-card rounded-[1.5rem] p-6 shadow-sm border border-white/10 text-center">
                <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3">
                  <BookOpen size={18} />
                </div>
-               <p className="text-3xl font-bold text-foreground mb-1">{stats.activeDecks}</p>
+               <p className="text-3xl font-bold text-foreground mb-1">{stats?.activeDecks || 0}</p>
                <p className="text-[10px] uppercase font-bold tracking-widest text-muted">Concepts</p>
              </div>
              <div className="bg-card rounded-[1.5rem] p-6 shadow-sm border border-white/10 text-center col-span-2 sm:col-span-1">
                <div className="w-10 h-10 rounded-full bg-accent-yellow/10 text-accent-yellow flex items-center justify-center mx-auto mb-3">
                  <Target size={18} />
                </div>
-               <p className="text-3xl font-bold text-foreground mb-1">{stats.streak}</p>
+               <p className="text-3xl font-bold text-foreground mb-1">{stats ? Math.floor(stats.total / 10) : 0}</p>
                <p className="text-[10px] uppercase font-bold tracking-widest text-muted">Day Streak</p>
              </div>
           </motion.div>

@@ -7,6 +7,8 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { AuthProvider } from "@/src/context/AuthContext";
 import { ThemeProvider } from "@/src/components/ThemeProvider";
+import { QueryProvider } from "@/src/providers/QueryProvider";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "inLucid — Spaced Repetition Mastery",
@@ -33,9 +35,14 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
-            {children}
-          </AuthProvider>
+          <QueryProvider>
+            <AuthProvider>
+              {children}
+              <Toaster position="bottom-center" toastOptions={{ 
+                style: { background: 'var(--card)', color: 'var(--foreground)', border: '1px solid var(--border)' }
+              }} />
+            </AuthProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

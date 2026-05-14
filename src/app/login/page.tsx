@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/src/lib/utils';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 export default function LoginPage() {
   const { signInWithEmail, signUpWithEmail, user, loading } = useAuth();
@@ -35,7 +36,7 @@ export default function LoginPage() {
         if (!name) throw new Error('Please tell us your name.');
         const { error } = await signUpWithEmail(email, password, name);
         if (error) throw error;
-        alert('Welcome! Please check your email to confirm your account.');
+        toast.success('Welcome! Please check your email to confirm your account.');
       } else {
         const { error } = await signInWithEmail(email, password);
         if (error) throw error;
