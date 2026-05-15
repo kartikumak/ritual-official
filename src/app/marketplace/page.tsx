@@ -74,7 +74,7 @@ export default function MarketplacePage() {
           deck_id: newDeck.id,
           word: a.word,
           hint: a.hint,
-          level: a.level,
+          level: a.level || 'basic',
           keywords: a.keywords || [],
           reference_answer: a.reference_answer
         }));
