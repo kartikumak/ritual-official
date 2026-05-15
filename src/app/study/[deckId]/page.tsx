@@ -261,59 +261,65 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
 
             </motion.div>
           ) : (
-            <motion.div key="result" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-6 pb-12">
-              <div className={cn(
-                "rounded-[2rem] p-8 text-center shadow-lg border border-white/20 relative overflow-hidden",
-                result?.evalResult?.level === 'strong' ? "bg-accent-green" : 
-                result?.evalResult?.level === 'medium' ? "bg-accent-yellow" : 
-                "bg-accent-pink"
-              )}>
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-[40px]" />
-                <span className="text-5xl block mb-4 relative z-10">{result?.evalResult?.emoji}</span>
-                <h3 className="text-xl font-bold text-background leading-tight relative z-10">{result?.evalResult?.label}</h3>
-                <p className="text-sm text-background/80 mt-2 font-medium relative z-10">{result?.evalResult?.correction}</p>
-              </div>
+            <motion.div key="result" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="flex-1 flex flex-col min-h-0 relative h-full">
+              
+              <div className="flex-1 overflow-y-auto space-y-5 pb-32 no-scrollbar px-1">
+                <div className={cn(
+                  "rounded-[2.5rem] p-8 text-center shadow-lg border border-white/20 relative overflow-hidden",
+                  result?.evalResult?.level === 'strong' ? "bg-accent-green text-black" : 
+                  result?.evalResult?.level === 'medium' ? "bg-accent-yellow text-black" : 
+                  "bg-accent-pink text-white"
+                )}>
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/30 rounded-full blur-[40px]" />
+                  <span className="text-6xl block mb-4 relative z-10">{result?.evalResult?.emoji}</span>
+                  <h3 className="text-2xl font-bold leading-tight relative z-10">{result?.evalResult?.label}</h3>
+                  <p className="text-sm opacity-80 mt-2 font-medium relative z-10">{result?.evalResult?.correction}</p>
+                </div>
 
-              <div className="bg-card rounded-[1.5rem] p-6 shadow-sm border border-white/10">
-                <p className="text-xs font-bold text-muted uppercase tracking-wider mb-4">Your Synthesis</p>
-                <div 
-                  className="bg-secondary/50 rounded-xl p-4 text-sm leading-relaxed mb-4 highlighted-answer font-medium"
-                  dangerouslySetInnerHTML={{ __html: result?.evalResult?.highlightedHtml || "" }} 
-                />
-                <div className="flex flex-wrap gap-2">
-                  {result?.evalResult?.hitKeywords?.map((kw: string) => (
-                    <span key={kw} className="bg-accent-green/10 text-accent-green px-3 py-1.5 rounded-full text-xs font-bold">✓ {kw}</span>
-                  ))}
-                  {result?.evalResult?.missKeywords?.map((kw: string) => (
-                    <span key={kw} className="bg-accent-pink/10 text-accent-pink px-3 py-1.5 rounded-full text-xs font-bold">✗ {kw}</span>
-                  ))}
+                <div className="bg-white/40 dark:bg-black/20 backdrop-blur-md rounded-[2.5rem] p-6 shadow-xl border border-white/10 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]">
+                  <p className="text-[10px] font-bold text-muted uppercase tracking-widest mb-4">Your Synthesis</p>
+                  <div 
+                    className="bg-background/40 rounded-2xl p-5 text-sm leading-relaxed mb-5 highlighted-answer font-medium font-serif border border-white/5"
+                    dangerouslySetInnerHTML={{ __html: result?.evalResult?.highlightedHtml || "" }} 
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    {result?.evalResult?.hitKeywords?.map((kw: string) => (
+                      <span key={kw} className="bg-accent-green/20 text-accent-green px-3 py-1.5 rounded-xl text-xs font-bold ring-1 ring-accent-green/30">✓ {kw}</span>
+                    ))}
+                    {result?.evalResult?.missKeywords?.map((kw: string) => (
+                      <span key={kw} className="bg-accent-pink/20 text-accent-pink px-3 py-1.5 rounded-xl text-xs font-bold ring-1 ring-accent-pink/30">✗ {kw}</span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-white/40 dark:bg-black/20 backdrop-blur-md rounded-[2.5rem] p-6 shadow-xl border border-white/10 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]">
+                  <p className="text-[10px] font-bold text-muted uppercase tracking-widest mb-3">Core Definition</p>
+                  <p className="text-lg font-serif font-medium leading-relaxed">{currentAnchor?.reference_answer}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                   <div className="bg-white/30 dark:bg-black/20 backdrop-blur-md rounded-[2rem] p-4 text-center border border-white/10">
+                      <p className="text-[10px] text-muted font-bold uppercase tracking-widest mb-1">Interval</p>
+                      <p className="text-xl font-bold text-primary">+{result?.newSRS?.interval_days}d</p>
+                   </div>
+                   <div className="bg-white/30 dark:bg-black/20 backdrop-blur-md rounded-[2rem] p-4 text-center border border-white/10">
+                      <p className="text-[10px] text-muted font-bold uppercase tracking-widest mb-1">Next Due</p>
+                      <p className="text-xl font-bold text-foreground">
+                        {result ? new Date(result.nextDue || result.newSRS.due_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ""}
+                      </p>
+                   </div>
                 </div>
               </div>
 
-              <div className="bg-card rounded-[1.5rem] p-6 shadow-sm border border-white/10">
-                <p className="text-xs font-bold text-muted uppercase tracking-wider mb-4">Core Definition</p>
-                <p className="text-sm font-medium leading-relaxed">{currentAnchor?.reference_answer}</p>
+              {/* Floating Next Button */}
+              <div className="absolute bottom-4 right-0 z-30 pointer-events-none w-full flex justify-end">
+                <button 
+                  onClick={nextAnchor}
+                  className="w-16 h-16 bg-foreground text-background rounded-full font-bold shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all pointer-events-auto ring-4 ring-background"
+                >
+                  <ChevronLeft size={28} className="rotate-180 ml-1" />
+                </button>
               </div>
-
-              <div className="flex gap-4">
-                 <div className="flex-1 bg-secondary rounded-[1.5rem] p-5 text-center">
-                    <p className="text-[10px] text-muted font-bold uppercase tracking-widest mb-1">Interval</p>
-                    <p className="text-lg font-bold text-primary">+{result?.newSRS?.interval_days}d</p>
-                 </div>
-                 <div className="flex-1 bg-secondary rounded-[1.5rem] p-5 text-center">
-                    <p className="text-[10px] text-muted font-bold uppercase tracking-widest mb-1">Next Due</p>
-                    <p className="text-lg font-bold text-foreground">
-                      {result ? new Date(result.nextDue || result.newSRS.due_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ""}
-                    </p>
-                 </div>
-              </div>
-
-              <button 
-                onClick={nextAnchor}
-                className="w-full bg-foreground text-background py-5 rounded-[1.5rem] font-bold shadow-xl flex items-center justify-center gap-2 mt-4 active:scale-[0.98] transition-transform"
-              >
-                Continue Concept <ChevronLeft size={18} className="rotate-180" />
-              </button>
             </motion.div>
           )}
         </AnimatePresence>

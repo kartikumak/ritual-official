@@ -35,7 +35,6 @@ export function ExpressiveWorkspace({
   const [isDrawing, setIsDrawing] = useState(false);
   const [paths, setPaths] = useState<any[]>([]);
   const [redoPaths, setRedoPaths] = useState<any[]>([]);
-  const [currentPath, setCurrentPath] = useState<any>(null);
 
   // Audio state
   const [isRecording, setIsRecording] = useState(false);
@@ -93,10 +92,6 @@ export function ExpressiveWorkspace({
     paths.forEach(p => {
       drawPath(ctx, p);
     });
-    
-    if (currentPath) {
-      drawPath(ctx, currentPath);
-    }
   };
 
   const drawPath = (ctx: CanvasRenderingContext2D, path: any) => {
@@ -116,38 +111,58 @@ export function ExpressiveWorkspace({
     ctx.globalCompositeOperation = 'source-over';
   };
 
+  const currentPathRef = useRef<any>(null);
+
   const startDraw = (e: any) => {
     if (activeTool === 'text') return;
-    e.preventDefault();
+    if (e.cancelable) e.preventDefault();
     const pos = getPos(e);
     setIsDrawing(true);
-    setCurrentPath({
+    currentPathRef.current = {
       tool: activeTool,
       color,
       size: activeTool === 'highlighter' ? 16 : activeTool === 'eraser' ? 24 : size,
       points: [pos]
-    });
+    };
     setRedoPaths([]); // Clear redo stack on new action
   };
 
   const moveDraw = (e: any) => {
-    if (!isDrawing || activeTool === 'text') return;
-    e.preventDefault();
+    if (!isDrawing || activeTool === 'text' || !currentPathRef.current) return;
+    if (e.cancelable) e.preventDefault();
     const pos = getPos(e);
-    setCurrentPath((prev: any) => ({
-      ...prev,
-      points: [...prev.points, pos]
-    }));
+    
+    // Add point to ref
+    currentPathRef.current.points.push(pos);
+    
+    // Draw just the new segment
+    const ctx = canvasRef.current?.getContext('2d');
+    if (ctx) {
+       const pts = currentPathRef.current.points;
+       if (pts.length > 1) {
+         ctx.beginPath();
+         ctx.moveTo(pts[pts.length - 2].x, pts[pts.length - 2].y);
+         ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+         ctx.strokeStyle = currentPathRef.current.tool === 'highlighter' ? currentPathRef.current.color + '66' : currentPathRef.current.tool === 'eraser' ? '#ffffff' : currentPathRef.current.color;
+         ctx.lineWidth = currentPathRef.current.size * 2;
+         ctx.lineCap = 'round';
+         ctx.lineJoin = 'round';
+         ctx.globalCompositeOperation = currentPathRef.current.tool === 'eraser' ? 'destination-out' : 'source-over';
+         ctx.stroke();
+         ctx.globalCompositeOperation = 'source-over';
+       }
+    }
   };
 
   const endDraw = () => {
     if (!isDrawing || activeTool === 'text') return;
     setIsDrawing(false);
-    if (currentPath) {
-      setPaths(prev => [...prev, currentPath]);
-      updateParentDrawing([...paths, currentPath]);
+    if (currentPathRef.current) {
+      const newPath = currentPathRef.current;
+      setPaths(prev => [...prev, newPath]);
+      updateParentDrawing([...paths, newPath]);
     }
-    setCurrentPath(null);
+    currentPathRef.current = null;
   };
 
   // Sync to parent format
@@ -171,7 +186,7 @@ export function ExpressiveWorkspace({
 
   useEffect(() => {
     redrawAll();
-  }, [paths, currentPath]);
+  }, [paths]);
 
   const undo = () => {
     if (paths.length === 0) return;

@@ -1,4 +1,18 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+
+* {
+  font-family: 'JetBrains Mono', monospace !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.02em;
+}
+
+h1, .header {
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
 
 :root {
   --background: #fdfcff;
@@ -461,6 +475,14 @@
   /* Disabled state */
   .disabled\:opacity {
     @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
   }
 }
 
