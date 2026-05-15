@@ -318,17 +318,10 @@ export function ExpressiveWorkspace({
       <div 
         ref={containerRef}
         className={cn(
-          "relative flex-1 bg-white/40 dark:bg-black/20 backdrop-blur-md rounded-[2.5rem] overflow-hidden w-full flex flex-col transition-all duration-500 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]",
-          activeTool !== 'text' && 'shadow-[inset_0_0_0_2px_rgba(139,92,246,0.3)]'
+          "relative flex-1 bg-background border border-dashed border-foreground/30 overflow-hidden w-full flex flex-col transition-all duration-500",
+          activeTool !== 'text' && 'ring-2 ring-foreground/10'
         )}
       >
-        {/* Dynamic Background */}
-        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden rounded-[2.5rem]">
-           <div className="absolute top-10 left-10 w-64 h-64 bg-primary/10 rounded-full blur-[80px]" />
-           <div className="absolute bottom-10 right-10 w-48 h-48 bg-accent-cyan/10 rounded-full blur-[80px]" />
-           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-b from-transparent to-background/50 pointer-events-none" />
-        </div>
-
         {/* Canvas Layer */}
         <div className="absolute inset-0 z-10 overscroll-none touch-none">
            <canvas
@@ -346,7 +339,7 @@ export function ExpressiveWorkspace({
 
         {/* Text Layer - Must scroll if exceeds height */}
         <div className="absolute inset-0 z-20 overflow-y-auto pointer-events-none">
-          <div className="p-8 md:p-12 min-h-full flex flex-col">
+          <div className="p-6 md:p-8 min-h-full flex flex-col">
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -367,19 +360,18 @@ export function ExpressiveWorkspace({
                   initial={{ opacity: 0, scale: 0.9, y: 20 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                  className="mt-8 p-3 pr-4 rounded-[2rem] bg-background/60 backdrop-blur-xl border border-white/10 flex items-center justify-between gap-4 pointer-events-auto shadow-xl w-fit max-w-full relative z-30"
+                  className="mt-8 p-3 pr-4 rounded-[2rem] bg-foreground text-background flex items-center justify-between gap-4 pointer-events-auto shadow-xl w-fit max-w-full relative z-30"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary relative shadow-inner">
-                      <div className="absolute inset-0 bg-primary/20 rounded-full animate-pulse blur-md" />
+                    <div className="w-12 h-12 rounded-full bg-background/20 flex items-center justify-center relative shadow-inner">
                       <Mic size={20} className="relative z-10" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-muted uppercase tracking-widest mb-1">Voice Memory</p>
+                      <p className="text-xs font-bold uppercase tracking-widest mb-1">Voice Memory</p>
                       <audio src={audioUrl} controls className="h-8 max-w-[180px] sm:max-w-[240px] opacity-80 hover:opacity-100 transition-opacity" />
                     </div>
                   </div>
-                  <button onClick={removeAudio} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-full text-muted transition-colors">
+                  <button onClick={removeAudio} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-full transition-colors">
                     <X size={16} />
                   </button>
                 </motion.div>
@@ -389,43 +381,44 @@ export function ExpressiveWorkspace({
         </div>
 
         {/* Floating Tools Container */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 pointer-events-auto flex flex-col items-center">
+        <div className="absolute bottom-6 right-4 z-30 pointer-events-auto flex flex-row items-end gap-4">
+          
           {/* Active Tool Sub-menu */}
           <AnimatePresence>
             {activeTool !== 'text' && (
               <motion.div 
-                initial={{ opacity: 0, y: 15, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                className="mb-4 p-2.5 bg-background/80 backdrop-blur-xl rounded-[2rem] border border-white/10 shadow-2xl flex items-center gap-3 w-fit"
+                initial={{ opacity: 0, x: 20, scale: 0.9 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: 20, scale: 0.95 }}
+                className="p-2.5 bg-foreground rounded-full shadow-2xl flex flex-col items-center gap-3 w-fit h-fit"
               >
                 {activeTool !== 'eraser' && (
-                  <div className="flex gap-2 px-3">
+                  <div className="flex flex-col gap-2 py-2">
                     {colors.map(c => (
                       <button
                         key={c}
                         onClick={() => setColor(c)}
                         style={{ backgroundColor: c }}
                         className={cn(
-                          "w-7 h-7 rounded-full border-2 transition-transform shadow-inner",
-                          color === c ? "border-white/80 scale-110" : "border-transparent hover:scale-110 opacity-70 hover:opacity-100"
+                          "w-6 h-6 rounded-full border-2 transition-transform shadow-inner mx-auto",
+                          color === c ? "border-background scale-125" : "border-transparent hover:scale-110 opacity-80"
                         )}
                       />
                     ))}
                   </div>
                 )}
                 
-                <div className="w-px h-8 bg-white/10 mx-2" />
+                {activeTool !== 'eraser' && <div className="h-px w-8 bg-background/20 mx-2" />}
                 
-                <div className="flex gap-1 pr-1">
-                  <button onClick={undo} disabled={paths.length === 0} className="w-10 h-10 rounded-full flex items-center justify-center text-muted hover:bg-white/10 hover:text-foreground disabled:opacity-20 disabled:hover:bg-transparent transition-colors">
+                <div className="flex flex-col gap-1 pb-1">
+                  <button onClick={undo} disabled={paths.length === 0} className="w-10 h-10 rounded-full flex items-center justify-center text-background/70 hover:bg-background/20 hover:text-background disabled:opacity-20 disabled:hover:bg-transparent transition-colors">
                     <Undo2 size={18} />
                   </button>
-                  <button onClick={redo} disabled={redoPaths.length === 0} className="w-10 h-10 rounded-full flex items-center justify-center text-muted hover:bg-white/10 hover:text-foreground disabled:opacity-20 disabled:hover:bg-transparent transition-colors">
+                  <button onClick={redo} disabled={redoPaths.length === 0} className="w-10 h-10 rounded-full flex items-center justify-center text-background/70 hover:bg-background/20 hover:text-background disabled:opacity-20 disabled:hover:bg-transparent transition-colors">
                     <Redo2 size={18} />
                   </button>
-                  <div className="w-px h-8 bg-white/10 mx-1" />
-                  <button onClick={clearCanvas} disabled={paths.length === 0} className="w-10 h-10 rounded-full flex items-center justify-center text-rose-400 hover:bg-rose-500/10 disabled:opacity-20 disabled:hover:bg-transparent transition-colors">
+                  <div className="h-px w-8 bg-background/20 mx-1 my-1" />
+                  <button onClick={clearCanvas} disabled={paths.length === 0} className="w-10 h-10 rounded-full flex items-center justify-center text-rose-400 hover:bg-rose-500/20 disabled:opacity-20 disabled:hover:bg-transparent transition-colors">
                     <Trash2 size={18} />
                   </button>
                 </div>
@@ -434,13 +427,12 @@ export function ExpressiveWorkspace({
           </AnimatePresence>
 
           {/* Main Toolbar */}
-          <div className="bg-background/80 backdrop-blur-xl p-2 rounded-full border border-white/10 shadow-2xl flex items-center gap-2">
-            <ToolButton icon={<Type size={20} />} active={activeTool === 'text'} onClick={() => setActiveTool('text')} />
-            <div className="w-px h-8 bg-white/10 mx-2" />
+          <div className="bg-foreground p-2 rounded-full shadow-2xl flex flex-col items-center gap-2">
             <ToolButton icon={<Pen size={20} />} active={activeTool === 'pen'} onClick={() => setActiveTool('pen')} />
-            <ToolButton icon={<Highlighter size={20} />} active={activeTool === 'highlighter'} onClick={() => setActiveTool('highlighter')} />
+            <ToolButton icon={<Type size={20} />} active={activeTool === 'text'} onClick={() => setActiveTool('text')} />
+            {/* Removed highlighter for simplicity in brutalist design */}
             <ToolButton icon={<Eraser size={20} />} active={activeTool === 'eraser'} onClick={() => setActiveTool('eraser')} />
-            <div className="w-px h-8 bg-white/10 mx-2" />
+            <div className="h-px w-8 bg-background/20 mx-2 my-1" />
             <RecordButton isRecording={isRecording} onStart={startRecording} onStop={stopRecording} formatTime={formatTime} recordingTime={recordingTime} />
           </div>
         </div>
@@ -454,11 +446,10 @@ function ToolButton({ icon, active, onClick }: { icon: React.ReactNode, active: 
     <button
       onClick={onClick}
       className={cn(
-        "w-12 h-12 rounded-full flex items-center justify-center transition-all relative",
-        active ? "text-primary bg-primary/10 shadow-inner scale-105" : "text-muted hover:bg-white/10 hover:text-foreground opacity-80 hover:opacity-100"
+        "w-12 h-12 rounded-full flex items-center justify-center transition-all relative overflow-hidden group",
+        active ? "text-foreground bg-background shadow-inner scale-105" : "text-background/80 hover:bg-background/20 hover:text-background"
       )}
     >
-      {active && <div className="absolute inset-0 rounded-full border border-primary/30" />}
       {icon}
     </button>
   );
@@ -466,17 +457,17 @@ function ToolButton({ icon, active, onClick }: { icon: React.ReactNode, active: 
 
 function RecordButton({ isRecording, onStart, onStop, formatTime, recordingTime }: { isRecording: boolean, onStart: () => void, onStop: () => void, formatTime: (s: number) => string, recordingTime: number }) {
   return (
-    <div className="relative flex items-center">
+    <div className="relative flex flex-col items-center">
       <AnimatePresence>
         {isRecording && (
           <motion.div 
-            initial={{ opacity: 0, width: 0 }}
-            animate={{ opacity: 1, width: 'auto' }}
-            exit={{ opacity: 0, width: 0 }}
-            className="absolute right-full mr-4 flex items-center gap-2 bg-rose-500/10 backdrop-blur-md px-4 py-2 rounded-full whitespace-nowrap overflow-hidden border border-rose-500/20 shadow-lg"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="absolute bottom-full mb-4 flex flex-col items-center gap-2 bg-rose-500 rounded-full px-2 py-4 whitespace-nowrap overflow-hidden border border-rose-600 shadow-lg text-white"
           >
-            <div className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
-            <span className="text-sm font-bold text-rose-500 tracking-widest">{formatTime(recordingTime)}</span>
+            <div className="w-2.5 h-2.5 rounded-full bg-white animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+            <span className="text-xs font-bold tracking-widest" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>{formatTime(recordingTime)}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -486,7 +477,7 @@ function RecordButton({ isRecording, onStart, onStop, formatTime, recordingTime 
           "w-12 h-12 rounded-full flex items-center justify-center transition-all relative overflow-hidden group",
           isRecording 
             ? "text-white" 
-            : "text-muted hover:bg-white/10 hover:text-foreground opacity-80 hover:opacity-100"
+            : "text-background/80 hover:bg-background/20 hover:text-background"
         )}
       >
         {isRecording && (

@@ -194,54 +194,56 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
     <div className="flex flex-col min-h-screen bg-background text-foreground overflow-hidden fixed inset-0">
       <div className="absolute top-0 inset-x-0 h-[400px] bg-gradient-to-b from-primary/10 via-background to-background pointer-events-none -z-10" />
 
-      <header className="max-w-3xl mx-auto w-full px-6 pt-12 pb-6 flex items-center justify-between shrink-0 relative z-10 transition-all">
-        <div className="flex items-center gap-4">
-          <button onClick={() => router.push('/')} className="w-10 h-10 shrink-0 rounded-full bg-secondary flex items-center justify-center text-muted hover:text-foreground transition-all active:scale-95 hover:bg-white hover:shadow">
-             <ChevronLeft size={20} className="-ml-0.5" />
+      <header className="max-w-3xl mx-auto w-full px-4 pt-6 pb-2 flex flex-col gap-4 relative z-10 transition-all bg-background">
+        <div className="flex items-center justify-between w-full">
+          <button onClick={() => router.push('/')} className="w-12 h-12 shrink-0 rounded-full bg-foreground flex items-center justify-center text-background hover:scale-105 transition-transform active:scale-95 shadow-md">
+             <ChevronLeft size={24} className="-ml-0.5" />
           </button>
-          <div>
-            <motion.div layoutId="session-progress" className="text-[10px] font-bold tracking-widest uppercase text-muted mb-0.5 flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              Cognitive Flow
-            </motion.div>
-            <div className="text-sm font-medium text-foreground flex items-baseline gap-1">
-              <span>{index + 1}</span>
-              <span className="text-xs text-muted">of {anchors.length}</span>
-            </div>
-          </div>
-        </div>
-        {phase === 'result' ? (
-           <button 
-             onClick={nextAnchor}
-             className="px-4 py-2 shrink-0 bg-foreground text-background rounded-full text-sm font-bold shadow-lg flex items-center gap-1 hover:scale-105 active:scale-95 transition-all outline-none ring-2 ring-transparent focus-visible:ring-primary"
-           >
-             Continue <ChevronLeft size={16} className="rotate-180 ml-0.5" />
-           </button>
-        ) : (
-          <div className="w-24 h-1.5 bg-secondary rounded-full overflow-hidden shrink-0 hidden sm:block">
+          
+          {/* Brutalist Progress Bar */}
+          <div className="flex-1 mx-6 h-4 border-2 border-foreground p-0.5 relative">
             <motion.div 
               initial={{ width: 0 }}
               animate={{ width: `${((index) / (anchors.length || 1)) * 100}%` }}
-              className="h-full bg-primary rounded-full transition-all duration-700 ease-out"
+              className="h-full bg-foreground transition-all duration-700 ease-out"
             />
           </div>
-        )}
+
+          {/* Forward / Next button replacing bottom button */}
+          {phase === 'input' ? (
+            <button 
+              onClick={handleEvaluate}
+              disabled={!hasContent || isSubmitting}
+              className="w-12 h-12 shrink-0 rounded-full bg-foreground flex items-center justify-center text-background hover:scale-105 transition-transform active:scale-95 shadow-md disabled:opacity-40"
+            >
+              {isSubmitting ? (
+                <div className="w-5 h-5 border-2 border-background/30 border-t-background rounded-full animate-spin" />
+              ) : (
+                <ChevronLeft size={24} className="rotate-180 ml-0.5" />
+              )}
+            </button>
+          ) : (
+            <button 
+              onClick={nextAnchor}
+              className="w-12 h-12 shrink-0 rounded-full bg-foreground flex items-center justify-center text-background hover:scale-105 transition-transform active:scale-95 shadow-md"
+            >
+              <ChevronLeft size={24} className="rotate-180 ml-0.5" />
+            </button>
+          )}
+        </div>
+
+        <div className="flex justify-start pt-2">
+          <div className="bg-foreground text-background px-6 py-2 rounded-2xl text-2xl md:text-3xl font-bold header inline-block border border-transparent shadow-sm">
+            {currentAnchor?.word || 'Anchor'}
+          </div>
+        </div>
       </header>
 
-      <main className="max-w-3xl mx-auto w-full px-6 flex-1 flex flex-col pb-6 relative z-10 min-h-0 overflow-y-auto">
+      <main className="max-w-3xl mx-auto w-full px-4 flex-1 flex flex-col pb-4 relative z-10 min-h-0 overflow-y-auto mb-2">
         <AnimatePresence mode="wait">
           {phase === 'input' ? (
              <motion.div key="input" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.98 }} className="flex-1 flex flex-col min-h-0">
               
-              <div className="mb-6 pt-4 text-center sm:text-left flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <h2 className="text-3xl sm:text-5xl header text-foreground leading-tight mb-2 drop-shadow-sm transition-all">{currentAnchor?.word}</h2>
-                  {currentAnchor?.hint && (
-                    <p className="text-sm text-muted font-medium bg-secondary/50 py-1.5 px-3 rounded-xl inline-flex w-fit">{currentAnchor.hint}</p>
-                  )}
-                </div>
-              </div>
-
               <ExpressiveWorkspace 
                 text={recallText}
                 setText={setRecallText}
@@ -252,24 +254,6 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
                 onContentChange={() => {}}
                 isSubmitting={isSubmitting}
               />
-
-              <div className="mt-4 pt-2 shrink-0">
-                <button 
-                  onClick={handleEvaluate}
-                  disabled={!hasContent || isSubmitting}
-                  className="w-full bg-foreground text-background py-4 rounded-[1.5rem] font-bold tracking-wide shadow-xl disabled:opacity-30 disabled:shadow-none transition-all active:scale-[0.98] flex items-center justify-center gap-2 group"
-                >
-                  {isSubmitting ? (
-                    <div className="w-5 h-5 border-2 border-background/30 border-t-background rounded-full animate-spin" /> 
-                  ) : (
-                    <>
-                      <Sparkles size={18} className="opacity-70 group-hover:opacity-100 transition-opacity" />
-                      Synthesize
-                    </>
-                  )}
-                </button>
-              </div>
-
             </motion.div>
           ) : (
             <motion.div key="result" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="flex-1 flex flex-col min-h-0 relative h-full">
