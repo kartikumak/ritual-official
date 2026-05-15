@@ -45,30 +45,70 @@ export function ExpressiveWorkspace({
 
   const colors = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#1f2937'];
 
-  // Initialize canvas
+  const stateRef = useRef({ activeTool, color, size, isDrawing: false });
+  useEffect(() => {
+    stateRef.current = { activeTool, color, size, isDrawing: isDrawing };
+  }, [activeTool, color, size, isDrawing]);
+
+  // Initialize canvas layout
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !containerRef.current) return;
     
     const resize = () => {
-      const rect = containerRef.current!.getBoundingClientRect();
-      // Only resize if different (avoid clearing on every small change if possible, but keep simple for now)
-      if (canvas.width !== rect.width * 2 || canvas.height !== rect.height * 2) {
+      if (!canvas || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const needsResize = canvas.width !== rect.width * 2 || canvas.height !== rect.height * 2;
+      
+      if (needsResize) {
         canvas.width = rect.width * 2;
         canvas.height = rect.height * 2;
         canvas.style.width = `${rect.width}px`;
         canvas.style.height = `${rect.height}px`;
-        redrawAll();
+        // Use a slight delay to let layout settle before redrawing paths
+        setTimeout(redrawAll, 10);
       }
     };
     
-    // Slight delay to allow layout to settle
     setTimeout(resize, 50);
     const observer = new ResizeObserver(resize);
     observer.observe(containerRef.current);
     
     return () => observer.disconnect();
-  }, [paths]); // Re-bind observer but depend on paths so resize rebuilds context
+  }, []); // Only run once for layout
+
+  // Initialize passive: false touch listeners exactly once
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (stateRef.current.activeTool !== 'text' && e.cancelable) e.preventDefault();
+      startDraw(e);
+    };
+    
+    const handleTouchMove = (e: TouchEvent) => {
+      if (stateRef.current.activeTool !== 'text' && e.cancelable) e.preventDefault();
+      moveDraw(e);
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (stateRef.current.activeTool !== 'text' && e.cancelable) e.preventDefault();
+      endDraw();
+    };
+
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+    canvas.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+
+    return () => {
+      canvas.removeEventListener('touchstart', handleTouchStart);
+      canvas.removeEventListener('touchmove', handleTouchMove);
+      canvas.removeEventListener('touchend', handleTouchEnd);
+      canvas.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, []); // Only run once
 
   const getPos = (e: any) => {
     const canvas = canvasRef.current;
@@ -114,21 +154,21 @@ export function ExpressiveWorkspace({
   const currentPathRef = useRef<any>(null);
 
   const startDraw = (e: any) => {
-    if (activeTool === 'text') return;
+    if (stateRef.current.activeTool === 'text') return;
     if (e.cancelable) e.preventDefault();
     const pos = getPos(e);
     setIsDrawing(true);
     currentPathRef.current = {
-      tool: activeTool,
-      color,
-      size: activeTool === 'highlighter' ? 16 : activeTool === 'eraser' ? 24 : size,
+      tool: stateRef.current.activeTool,
+      color: stateRef.current.color,
+      size: stateRef.current.activeTool === 'highlighter' ? 16 : stateRef.current.activeTool === 'eraser' ? 24 : stateRef.current.size,
       points: [pos]
     };
     setRedoPaths([]); // Clear redo stack on new action
   };
 
   const moveDraw = (e: any) => {
-    if (!isDrawing || activeTool === 'text' || !currentPathRef.current) return;
+    if (!stateRef.current.isDrawing || stateRef.current.activeTool === 'text' || !currentPathRef.current) return;
     if (e.cancelable) e.preventDefault();
     const pos = getPos(e);
     
@@ -155,7 +195,7 @@ export function ExpressiveWorkspace({
   };
 
   const endDraw = () => {
-    if (!isDrawing || activeTool === 'text') return;
+    if (!stateRef.current.isDrawing || stateRef.current.activeTool === 'text') return;
     setIsDrawing(false);
     if (currentPathRef.current) {
       const newPath = currentPathRef.current;
@@ -297,9 +337,6 @@ export function ExpressiveWorkspace({
              onMouseMove={moveDraw}
              onMouseUp={endDraw}
              onMouseLeave={endDraw}
-             onTouchStart={startDraw}
-             onTouchMove={moveDraw}
-             onTouchEnd={endDraw}
              className={cn(
                "w-full h-full",
                activeTool !== 'text' ? "pointer-events-auto cursor-crosshair" : "pointer-events-none"
@@ -320,7 +357,7 @@ export function ExpressiveWorkspace({
                 }
               }}
               style={{ pointerEvents: activeTool === 'text' ? 'auto' : 'none' }}
-              className="w-full bg-transparent text-foreground placeholder:text-muted/40 font-serif text-2xl md:text-3xl leading-relaxed outline-none resize-none flex-1 min-h-[200px]"
+              className="w-full bg-transparent text-foreground placeholder:text-muted/40 text-xl md:text-2xl leading-relaxed outline-none resize-none flex-1 min-h-[200px]"
             />
             
             {/* Inline Audio Attachment */}

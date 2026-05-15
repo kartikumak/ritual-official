@@ -196,7 +196,7 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
 
       <header className="max-w-3xl mx-auto w-full px-6 pt-12 pb-6 flex items-center justify-between shrink-0 relative z-10 transition-all">
         <div className="flex items-center gap-4">
-          <button onClick={() => router.push('/')} className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted hover:text-foreground transition-all active:scale-95 hover:bg-white hover:shadow">
+          <button onClick={() => router.push('/')} className="w-10 h-10 shrink-0 rounded-full bg-secondary flex items-center justify-center text-muted hover:text-foreground transition-all active:scale-95 hover:bg-white hover:shadow">
              <ChevronLeft size={20} className="-ml-0.5" />
           </button>
           <div>
@@ -210,13 +210,22 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
             </div>
           </div>
         </div>
-        <div className="w-24 h-1.5 bg-secondary rounded-full overflow-hidden">
-          <motion.div 
-            initial={{ width: 0 }}
-            animate={{ width: `${((index) / (anchors.length || 1)) * 100}%` }}
-            className="h-full bg-primary rounded-full transition-all duration-700 ease-out"
-          />
-        </div>
+        {phase === 'result' ? (
+           <button 
+             onClick={nextAnchor}
+             className="px-4 py-2 shrink-0 bg-foreground text-background rounded-full text-sm font-bold shadow-lg flex items-center gap-1 hover:scale-105 active:scale-95 transition-all outline-none ring-2 ring-transparent focus-visible:ring-primary"
+           >
+             Continue <ChevronLeft size={16} className="rotate-180 ml-0.5" />
+           </button>
+        ) : (
+          <div className="w-24 h-1.5 bg-secondary rounded-full overflow-hidden shrink-0 hidden sm:block">
+            <motion.div 
+              initial={{ width: 0 }}
+              animate={{ width: `${((index) / (anchors.length || 1)) * 100}%` }}
+              className="h-full bg-primary rounded-full transition-all duration-700 ease-out"
+            />
+          </div>
+        )}
       </header>
 
       <main className="max-w-3xl mx-auto w-full px-6 flex-1 flex flex-col pb-6 relative z-10 min-h-0 overflow-y-auto">
@@ -224,11 +233,13 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
           {phase === 'input' ? (
              <motion.div key="input" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.98 }} className="flex-1 flex flex-col min-h-0">
               
-              <div className="mb-6 pt-4">
-                <h2 className="text-4xl sm:text-5xl font-serif text-foreground leading-tight mb-2 drop-shadow-sm transition-all">{currentAnchor?.word}</h2>
-                {currentAnchor?.hint && (
-                  <p className="text-sm text-muted font-medium bg-secondary/50 py-1.5 px-3 rounded-xl inline-flex w-fit">{currentAnchor.hint}</p>
-                )}
+              <div className="mb-6 pt-4 text-center sm:text-left flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h2 className="text-3xl sm:text-5xl header text-foreground leading-tight mb-2 drop-shadow-sm transition-all">{currentAnchor?.word}</h2>
+                  {currentAnchor?.hint && (
+                    <p className="text-sm text-muted font-medium bg-secondary/50 py-1.5 px-3 rounded-xl inline-flex w-fit">{currentAnchor.hint}</p>
+                  )}
+                </div>
               </div>
 
               <ExpressiveWorkspace 
@@ -279,7 +290,7 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
                 <div className="bg-white/40 dark:bg-black/20 backdrop-blur-md rounded-[2.5rem] p-6 shadow-xl border border-white/10 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]">
                   <p className="text-[10px] font-bold text-muted uppercase tracking-widest mb-4">Your Synthesis</p>
                   <div 
-                    className="bg-background/40 rounded-2xl p-5 text-sm leading-relaxed mb-5 highlighted-answer font-medium font-serif border border-white/5"
+                    className="bg-background/40 rounded-2xl p-5 text-sm leading-relaxed mb-5 highlighted-answer font-medium border border-white/5"
                     dangerouslySetInnerHTML={{ __html: result?.evalResult?.highlightedHtml || "" }} 
                   />
                   <div className="flex flex-wrap gap-2">
@@ -294,7 +305,7 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
 
                 <div className="bg-white/40 dark:bg-black/20 backdrop-blur-md rounded-[2.5rem] p-6 shadow-xl border border-white/10 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]">
                   <p className="text-[10px] font-bold text-muted uppercase tracking-widest mb-3">Core Definition</p>
-                  <p className="text-lg font-serif font-medium leading-relaxed">{currentAnchor?.reference_answer}</p>
+                  <p className="text-lg font-medium leading-relaxed">{currentAnchor?.reference_answer}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -311,15 +322,7 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
                 </div>
               </div>
 
-              {/* Floating Next Button */}
-              <div className="absolute bottom-4 right-0 z-30 pointer-events-none w-full flex justify-end">
-                <button 
-                  onClick={nextAnchor}
-                  className="w-16 h-16 bg-foreground text-background rounded-full font-bold shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all pointer-events-auto ring-4 ring-background"
-                >
-                  <ChevronLeft size={28} className="rotate-180 ml-1" />
-                </button>
-              </div>
+              {/* Removed Floating Next Button */}
             </motion.div>
           )}
         </AnimatePresence>
