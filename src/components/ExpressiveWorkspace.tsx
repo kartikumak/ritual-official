@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Pen, Type, Highlighter, Eraser, Undo2, Redo2, Mic, Square, Trash2, X, Circle } from 'lucide-react';
+import { Pen, Type, Highlighter, Eraser, Undo2, Redo2, Mic, Square, Trash2, X, Circle, ChevronDown, ChevronUp, EyeOff, Palette } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 
 interface ExpressiveWorkspaceProps {
@@ -42,6 +42,12 @@ export function ExpressiveWorkspace({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [isManualMinimized, setIsManualMinimized] = useState(false);
+  const [isToolbarHidden, setIsToolbarHidden] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+
+  const isMinimized = isManualMinimized || isDrawing || isFocused;
 
   const colors = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#1f2937'];
 
@@ -343,6 +349,8 @@ export function ExpressiveWorkspace({
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
               placeholder="Express whatever you remember..."
               onPointerDown={(e) => {
                 if(activeTool === 'text') {
@@ -380,62 +388,109 @@ export function ExpressiveWorkspace({
           </div>
         </div>
 
-        {/* Floating Tools Container */}
-        <div className="absolute bottom-6 right-4 z-30 pointer-events-auto flex flex-row items-end gap-4">
-          
-          {/* Active Tool Sub-menu */}
-          <AnimatePresence>
-            {activeTool !== 'text' && (
-              <motion.div 
-                initial={{ opacity: 0, x: 20, scale: 0.9 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0, x: 20, scale: 0.95 }}
-                className="p-2.5 bg-foreground rounded-full shadow-2xl flex flex-col items-center gap-3 w-fit h-fit"
+        {/* Hidden Toolbar Reopen Button */}
+        <AnimatePresence>
+          {isToolbarHidden && (
+            <motion.div 
+               initial={{ opacity: 0, scale: 0.8 }}
+               animate={{ opacity: 1, scale: 1 }}
+               exit={{ opacity: 0, scale: 0.8 }}
+               className="absolute bottom-6 right-4 z-30 pointer-events-auto"
+            >
+              <button 
+                onClick={() => setIsToolbarHidden(false)}
+                className="w-12 h-12 bg-foreground text-background rounded-full shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+                title="Show Toolbar"
               >
-                {activeTool !== 'eraser' && (
-                  <div className="flex flex-col gap-2 py-2">
-                    {colors.map(c => (
-                      <button
-                        key={c}
-                        onClick={() => setColor(c)}
-                        style={{ backgroundColor: c }}
-                        className={cn(
-                          "w-6 h-6 rounded-full border-2 transition-transform shadow-inner mx-auto",
-                          color === c ? "border-background scale-125" : "border-transparent hover:scale-110 opacity-80"
-                        )}
-                      />
-                    ))}
-                  </div>
-                )}
-                
-                {activeTool !== 'eraser' && <div className="h-px w-8 bg-background/20 mx-2" />}
-                
-                <div className="flex flex-col gap-1 pb-1">
-                  <button onClick={undo} disabled={paths.length === 0} className="w-10 h-10 rounded-full flex items-center justify-center text-background/70 hover:bg-background/20 hover:text-background disabled:opacity-20 disabled:hover:bg-transparent transition-colors">
-                    <Undo2 size={18} />
-                  </button>
-                  <button onClick={redo} disabled={redoPaths.length === 0} className="w-10 h-10 rounded-full flex items-center justify-center text-background/70 hover:bg-background/20 hover:text-background disabled:opacity-20 disabled:hover:bg-transparent transition-colors">
-                    <Redo2 size={18} />
-                  </button>
-                  <div className="h-px w-8 bg-background/20 mx-1 my-1" />
-                  <button onClick={clearCanvas} disabled={paths.length === 0} className="w-10 h-10 rounded-full flex items-center justify-center text-rose-400 hover:bg-rose-500/20 disabled:opacity-20 disabled:hover:bg-transparent transition-colors">
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                <Palette size={20} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          {/* Main Toolbar */}
-          <div className="bg-foreground p-2 rounded-full shadow-2xl flex flex-col items-center gap-2">
-            <ToolButton icon={<Pen size={20} />} active={activeTool === 'pen'} onClick={() => setActiveTool('pen')} />
-            <ToolButton icon={<Type size={20} />} active={activeTool === 'text'} onClick={() => setActiveTool('text')} />
-            {/* Removed highlighter for simplicity in brutalist design */}
-            <ToolButton icon={<Eraser size={20} />} active={activeTool === 'eraser'} onClick={() => setActiveTool('eraser')} />
-            <div className="h-px w-8 bg-background/20 mx-2 my-1" />
-            <RecordButton isRecording={isRecording} onStart={startRecording} onStop={stopRecording} formatTime={formatTime} recordingTime={recordingTime} />
-          </div>
-        </div>
+        {/* Floating Tools Container */}
+        <AnimatePresence>
+          {!isToolbarHidden && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              className="absolute bottom-6 right-4 z-30 pointer-events-auto flex flex-row items-end gap-4"
+            >
+              {/* Active Tool Sub-menu */}
+              <AnimatePresence>
+                {!isMinimized && activeTool !== 'text' && (
+                  <motion.div 
+                    initial={{ opacity: 0, x: 20, scale: 0.9 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    exit={{ opacity: 0, x: 20, scale: 0.95 }}
+                    className="p-2.5 bg-foreground rounded-full shadow-2xl flex flex-col items-center gap-3 w-fit h-fit"
+                  >
+                    {activeTool !== 'eraser' && (
+                      <div className="flex flex-col gap-2 py-2">
+                        {colors.map(c => (
+                          <button
+                            key={c}
+                            onClick={() => setColor(c)}
+                            style={{ backgroundColor: c }}
+                            className={cn(
+                              "w-6 h-6 rounded-full border-2 transition-transform shadow-inner mx-auto",
+                              color === c ? "border-background scale-125" : "border-transparent hover:scale-110 opacity-80"
+                            )}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    
+                    {activeTool !== 'eraser' && <div className="h-px w-8 bg-background/20 mx-2" />}
+                    
+                    <div className="flex flex-col gap-1 pb-1">
+                      <button onClick={undo} disabled={paths.length === 0} className="w-10 h-10 rounded-full flex items-center justify-center text-background/70 hover:bg-background/20 hover:text-background disabled:opacity-20 disabled:hover:bg-transparent transition-colors">
+                        <Undo2 size={18} />
+                      </button>
+                      <button onClick={redo} disabled={redoPaths.length === 0} className="w-10 h-10 rounded-full flex items-center justify-center text-background/70 hover:bg-background/20 hover:text-background disabled:opacity-20 disabled:hover:bg-transparent transition-colors">
+                        <Redo2 size={18} />
+                      </button>
+                      <div className="h-px w-8 bg-background/20 mx-1 my-1" />
+                      <button onClick={clearCanvas} disabled={paths.length === 0} className="w-10 h-10 rounded-full flex items-center justify-center text-rose-400 hover:bg-rose-500/20 disabled:opacity-20 disabled:hover:bg-transparent transition-colors">
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Main Toolbar */}
+              <motion.div layout className="bg-foreground p-2 rounded-full shadow-2xl flex flex-col items-center gap-2">
+                {!isMinimized ? (
+                  <>
+                    <button className="w-8 h-8 rounded-full flex items-center justify-center text-background/50 hover:text-background/90" title="Hide completely" onClick={() => setIsToolbarHidden(true)}>
+                      <EyeOff size={16} />
+                    </button>
+                    <button className="w-8 h-8 rounded-full flex items-center justify-center text-background/50 hover:text-background/90 mb-1" title="Minimize" onClick={() => setIsManualMinimized(true)}>
+                      <ChevronDown size={20} />
+                    </button>
+                    <ToolButton icon={<Pen size={20} />} active={activeTool === 'pen'} onClick={() => setActiveTool('pen')} />
+                    <ToolButton icon={<Type size={20} />} active={activeTool === 'text'} onClick={() => setActiveTool('text')} />
+                    <ToolButton icon={<Eraser size={20} />} active={activeTool === 'eraser'} onClick={() => setActiveTool('eraser')} />
+                    <div className="h-px w-8 bg-background/20 mx-2 my-1" />
+                    <RecordButton isRecording={isRecording} onStart={startRecording} onStop={stopRecording} formatTime={formatTime} recordingTime={recordingTime} />
+                  </>
+                ) : (
+                  <>
+                    <button className="w-12 h-12 rounded-full flex items-center justify-center text-background/80 hover:bg-background/20 hover:text-background" title="Expand Toolbar" onClick={() => setIsManualMinimized(false)}>
+                      <ChevronUp size={24} />
+                    </button>
+                    {activeTool === 'pen' && <ToolButton icon={<Pen size={20} />} active={true} onClick={() => setIsManualMinimized(false)} />}
+                    {activeTool === 'text' && <ToolButton icon={<Type size={20} />} active={true} onClick={() => setIsManualMinimized(false)} />}
+                    {activeTool === 'eraser' && <ToolButton icon={<Eraser size={20} />} active={true} onClick={() => setIsManualMinimized(false)} />}
+                    {isRecording && <div className="mt-2"><RecordButton isRecording={isRecording} onStart={startRecording} onStop={stopRecording} formatTime={formatTime} recordingTime={recordingTime} /></div>}
+                  </>
+                )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
