@@ -9,6 +9,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isGuest: boolean;
   signOut: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<{ error: any }>;
   signUpWithEmail: (email: string, password: string, name: string) => Promise<{ error: any }>;
@@ -17,18 +18,40 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const guestUser: User = {
+  id: '00000000-0000-0000-0000-000000000000',
+  email: 'learner@inlucid.app',
+  user_metadata: { name: 'Learner' },
+  aud: 'authenticated',
+  role: 'authenticated',
+  created_at: new Date().toISOString(),
+  app_metadata: {},
+} as any;
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [isGuest, setIsGuest] = useState(false);
   const [loading, setLoading] = useState(true);
   const supabase = getSupabase();
   const router = useRouter();
 
   useEffect(() => {
     const fetchSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        if (session?.user) {
+          setUser(session.user);
+          setIsGuest(false);
+        } else {
+          setUser(guestUser);
+          setIsGuest(true);
+        }
+      } catch (err) {
+        setUser(guestUser);
+        setIsGuest(true);
+      }
       setLoading(false);
     };
 
@@ -36,7 +59,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      setUser(session?.user ?? null);
+      if (session?.user) {
+        setUser(session.user);
+        setIsGuest(false);
+      } else {
+        setUser(guestUser);
+        setIsGuest(true);
+      }
       setLoading(false);
     });
 
@@ -69,7 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut, signInWithEmail, signUpWithEmail, resetPassword }}>
+    <AuthContext.Provider value={{ user, session, loading, isGuest, signOut, signInWithEmail, signUpWithEmail, resetPassword }}>
       {children}
     </AuthContext.Provider>
   );

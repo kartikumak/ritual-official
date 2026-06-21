@@ -13,7 +13,7 @@ import { ExpressiveWorkspace } from "@/src/components/ExpressiveWorkspace";
 
 export default function StudySession({ params }: { params: Promise<{ deckId: string }> }) {
   const { deckId } = use(params);
-  const { user, loading: authLoading } = useAuth();
+  const { user, isGuest, loading: authLoading } = useAuth();
   
   const [loading, setLoading] = useState(true);
   const [anchors, setAnchors] = useState<any[]>([]);
@@ -35,8 +35,17 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
 
   // Fetch Deck using React Query
   const { data: deck } = useQuery({
-    queryKey: ['deck', deckId],
+    queryKey: ['deck', deckId, isGuest],
     queryFn: async () => {
+      if (isGuest) {
+        const stored = localStorage.getItem('inlucid_decks');
+        if (stored) {
+          const decks = JSON.parse(stored);
+          const d = decks.find((x: any) => x.id === deckId);
+          if (d) return d;
+        }
+        return { id: deckId, name: '🧠 Cognitive Neuroscience', description: 'Brain processing' };
+      }
       const { data, error } = await supabase.from('decks').select('*').eq('id', deckId).single();
       if (error) throw error;
       return data;
@@ -45,26 +54,48 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
   });
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    } else if (user && deck) {
+    if (user && deck) {
       startSession();
     }
-  }, [user, authLoading, deck]);
+  }, [user, deck]);
 
   const startSession = async () => {
     setLoading(true);
     try {
-      const { data: anchorsData } = await supabase
-        .from('anchors')
-        .select('*, anchor_progress(*)')
-        .eq('deck_id', deckId);
+      let anchorsData: any[] = [];
+      if (isGuest) {
+        const stored = localStorage.getItem('inlucid_anchors_' + deckId);
+        if (stored) {
+          anchorsData = JSON.parse(stored);
+        } else {
+          const DEFAULT_ANCHORS: Record<string, any[]> = {
+            'neuroscience-101': [
+              { id: 'n1', deck_id: deckId, word: 'Long-Term Potentiation (LTP)', hint: 'Synaptic strengthening', reference_answer: 'A persistent strengthening of synapses based on recent patterns of activity, forming the fundamental cellular mechanisms for learning and memory.' },
+              { id: 'n2', deck_id: deckId, word: 'Hippocampus', hint: 'Consolidation hub', reference_answer: 'A major component of the brain responsible for consolidating info from short-term memory to long-term memory, and enabling spatial navigation.' },
+              { id: 'n3', deck_id: deckId, word: 'Myelin Sheath', hint: 'Axon insulator', reference_answer: 'A lipid-rich insulating layer surrounding nerve fibers that greatly increases the speed at which electrical impulses travel along the axon.' }
+            ],
+            'study-mechanics': [
+              { id: 's1', deck_id: deckId, word: 'The Forgetting Curve', hint: 'Exponential decline', reference_answer: 'A model mapping how information is lost over time when there is no attempt to retain it, illustrating that memory retention drops sharply in the first few days.' },
+              { id: 's2', deck_id: deckId, word: 'Active Recall', hint: 'Self-testing', reference_answer: 'A high-efficiency study technique where you force your brain to retrieve knowledge without looking at notes, establishing deeper cognitive connections.' },
+              { id: 's3', deck_id: deckId, word: 'The Leitner System', hint: 'Flashcard boxes', reference_answer: 'An spaced-repetition methodology using organized boxes of flashcards where correct answers advance cards to further review intervals, and errors send them back.' }
+            ]
+          };
+          anchorsData = DEFAULT_ANCHORS[deckId] || [];
+        }
+      } else {
+        const { data } = await supabase
+          .from('anchors')
+          .select('*, anchor_progress(*)')
+          .eq('deck_id', deckId);
+        anchorsData = data || [];
+      }
 
       const now = new Date();
-      const due = anchorsData?.filter(a => {
+      const due = anchorsData.filter(a => {
+        if (isGuest) return true;
         if (!a.anchor_progress || a.anchor_progress.length === 0) return true;
         return new Date(a.anchor_progress[0].due_at) <= now;
-      }) || [];
+      });
 
       // Sort by depth
       const sorted = due.sort((a,b) => (a.anchor_progress?.[0]?.concept_depth || 0) - (b.anchor_progress?.[0]?.concept_depth || 0));
@@ -73,10 +104,12 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
         setPhase('complete');
       } else {
         setAnchors(sorted);
-        if (user) {
+        if (!isGuest && user) {
           const { data: sess, error: sErr } = await supabase.from('sessions').insert({ user_id: user.id, deck_id: deckId }).select().single();
           if (sErr) console.error("Session creation error:", sErr);
           setSession(sess);
+        } else {
+          setSession({ id: 'guest_session_' + Date.now() });
         }
       }
     } catch (err: any) {
@@ -93,13 +126,25 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
     const current = anchors[index];
     
     try {
+      let progressObj = undefined;
+      if (isGuest) {
+        const storedProg = localStorage.getItem('inlucid_progress_' + current.id);
+        if (storedProg) {
+          try {
+            progressObj = JSON.parse(storedProg);
+          } catch(e){}
+        }
+      }
+
       const payloadString = JSON.stringify({
         user_id: user?.id,
         anchor_id: current.id,
         text: recallText,
         session_id: session?.id,
         drawing_json: drawingData,
-        audio_url: audioUrl
+        audio_url: audioUrl,
+        anchor: isGuest ? { word: current.word, reference_answer: current.reference_answer } : undefined,
+        progress: progressObj
       });
       
       if (payloadString.length > 5 * 1024 * 1024) {
@@ -124,6 +169,23 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
 
       const data = await resp.json();
       if (data.error) throw new Error(data.error);
+
+      if (isGuest) {
+        if (data.newSRS) {
+          localStorage.setItem('inlucid_progress_' + current.id, JSON.stringify(data.newSRS));
+        }
+        const storedLogs = localStorage.getItem('inlucid_review_logs') || '[]';
+        try {
+          const logs = JSON.parse(storedLogs);
+          logs.push({
+            id: 'log_' + Math.random().toString(36).substr(2, 9),
+            user_id: user?.id,
+            anchor_id: current.id,
+            reviewed_at: new Date().toISOString()
+          });
+          localStorage.setItem('inlucid_review_logs', JSON.stringify(logs));
+        } catch (e) {}
+      }
 
       setResult(data);
       setPhase('result');
@@ -150,10 +212,10 @@ export default function StudySession({ params }: { params: Promise<{ deckId: str
   };
 
   const completeSession = async () => {
-    if (session?.id) {
+    if (!isGuest && session?.id) {
        await supabase.from('sessions').update({ ended_at: new Date().toISOString() }).eq('id', session.id);
     }
-    queryClient.invalidateQueries({ queryKey: ['stats', user?.id] });
+    queryClient.invalidateQueries({ queryKey: ['stats', user?.id, isGuest] });
     setPhase('complete');
   };
 

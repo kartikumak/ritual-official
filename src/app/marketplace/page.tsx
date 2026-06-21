@@ -10,7 +10,7 @@ import { cn } from "@/src/lib/utils";
 import { toast } from "sonner";
 
 export default function MarketplacePage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, isGuest, loading: authLoading } = useAuth();
   const [decks, setDecks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -42,6 +42,55 @@ export default function MarketplacePage() {
     if (!user) {
       router.push('/login');
       return;
+    }
+
+    if (isGuest) {
+      try {
+        const localDecks = JSON.parse(localStorage.getItem('inlucid_decks') || '[]');
+        const newDeck = {
+          id: 'deck_' + Math.random().toString(36).substr(2, 9),
+          user_id: user.id,
+          name: `${publicDeck.name} (Imported)`,
+          description: publicDeck.description,
+          is_public: false,
+          category: publicDeck.category,
+          created_at: new Date().toISOString(),
+          anchorCount: 0
+        };
+        localDecks.push(newDeck);
+        localStorage.setItem('inlucid_decks', JSON.stringify(localDecks));
+
+        const { data: anchors, error: aErr } = await supabase
+          .from('anchors')
+          .select('*')
+          .eq('deck_id', publicDeck.id);
+
+        if (aErr) throw aErr;
+
+        if (anchors && anchors.length > 0) {
+          const anchorsToInsert = anchors.map((a: any) => ({
+            id: 'anchor_' + Math.random().toString(36).substr(2, 9),
+            deck_id: newDeck.id,
+            word: a.word,
+            hint: a.hint,
+            level: a.level || 'basic',
+            keywords: a.keywords || [],
+            reference_answer: a.reference_answer,
+            created_at: new Date().toISOString()
+          }));
+          localStorage.setItem('inlucid_anchors_' + newDeck.id, JSON.stringify(anchorsToInsert));
+          
+          newDeck.anchorCount = anchorsToInsert.length;
+          localStorage.setItem('inlucid_decks', JSON.stringify(localDecks));
+        }
+
+        toast.success("Collection anchored to your local space!");
+        router.push('/');
+        return;
+      } catch (err: any) {
+        toast.error("Import failed: " + err.message);
+        return;
+      }
     }
 
     try {

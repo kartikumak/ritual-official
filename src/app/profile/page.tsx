@@ -11,7 +11,7 @@ import { useProfile } from "@/src/hooks/useProfile";
 import { toast } from "sonner";
 
 export default function ProfilePage() {
-  const { user, signOut, loading: authLoading } = useAuth();
+  const { user, isGuest, signOut, loading: authLoading } = useAuth();
   
   const { profile, stats, isLoading: profileLoading, updateProfile, isUpdating } = useProfile();
   
@@ -26,8 +26,8 @@ export default function ProfilePage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!authLoading && !user) router.push('/login');
-  }, [user, authLoading]);
+    if (!authLoading && !user && !isGuest) router.push('/login');
+  }, [user, authLoading, isGuest]);
 
   useEffect(() => {
     if (profile) {
@@ -82,9 +82,11 @@ export default function ProfilePage() {
         <Link href="/" className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted hover:text-foreground transition-colors shadow-sm">
            <ChevronLeft size={20} className="-ml-0.5" />
         </Link>
-        <button onClick={signOut} className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-accent-pink hover:bg-accent-pink/10 transition-colors shadow-sm">
-           <LogOut size={16} className="ml-1" />
-        </button>
+        {!isGuest && (
+          <button onClick={signOut} className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-accent-pink hover:bg-accent-pink/10 transition-colors shadow-sm">
+             <LogOut size={16} className="ml-1" />
+          </button>
+        )}
       </header>
 
       <main className="max-w-xl mx-auto px-6 w-full relative z-10 mt-4">
