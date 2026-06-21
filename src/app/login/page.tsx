@@ -10,9 +10,10 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 
 export default function LoginPage() {
-  const { signInWithEmail, signUpWithEmail, user, loading } = useAuth();
+  const { signInWithEmail, signUpWithEmail, resetPassword, user, loading } = useAuth();
   const router = useRouter();
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -48,6 +49,27 @@ export default function LoginPage() {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!email) {
+      setError('Please enter your email address first.');
+      return;
+    }
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await resetPassword(email);
+      if (error) throw error;
+      toast.success('Password reset link sent! Check your email inbox.');
+      setIsForgotPassword(false);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen bg-background">
       <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
@@ -72,33 +94,40 @@ export default function LoginPage() {
         className="w-full max-w-sm z-10"
       >
         <div className="bg-card/80 backdrop-blur-2xl border border-white/20 rounded-[2.5rem] p-8 shadow-2xl">
-          <div className="flex gap-4 mb-8 bg-secondary/50 p-1.5 rounded-full">
-            <button 
-              onClick={() => { setIsSignUp(false); setError(null); }}
-              className={cn(
-                "flex-1 py-3 text-xs font-bold rounded-full transition-all",
-                !isSignUp ? "bg-card shadow-sm text-foreground" : "text-muted hover:text-foreground"
-              )}
-            >
-              Sign In
-            </button>
-            <button 
-              onClick={() => { setIsSignUp(true); setError(null); }}
-              className={cn(
-                "flex-1 py-3 text-xs font-bold rounded-full transition-all",
-                isSignUp ? "bg-card shadow-sm text-foreground" : "text-muted hover:text-foreground"
-              )}
-            >
-              Create Account
-            </button>
-          </div>
+          {isForgotPassword ? (
+            <div className="mb-8 text-center px-4">
+              <h2 className="text-xl font-serif text-foreground mb-1">Reset Password</h2>
+              <p className="text-muted text-xs font-medium">Enter your email and we will send you a secure reset link.</p>
+            </div>
+          ) : (
+            <div className="flex gap-4 mb-8 bg-secondary/50 p-1.5 rounded-full">
+              <button 
+                onClick={() => { setIsSignUp(false); setError(null); setIsForgotPassword(false); }}
+                className={cn(
+                  "flex-1 py-3 text-xs font-bold rounded-full transition-all",
+                  !isSignUp ? "bg-card shadow-sm text-foreground" : "text-muted hover:text-foreground"
+                )}
+              >
+                Sign In
+              </button>
+              <button 
+                onClick={() => { setIsSignUp(true); setError(null); setIsForgotPassword(false); }}
+                className={cn(
+                  "flex-1 py-3 text-xs font-bold rounded-full transition-all",
+                  isSignUp ? "bg-card shadow-sm text-foreground" : "text-muted hover:text-foreground"
+                )}
+              >
+                Create Account
+              </button>
+            </div>
+          )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={isForgotPassword ? handleForgotPassword : handleSubmit} className="space-y-4">
             <AnimatePresence mode="popLayout">
-              {isSignUp && (
+              {isSignUp && !isForgotPassword && (
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-1.5">
                   <input 
-                    required={isSignUp}
+                    required={isSignUp && !isForgotPassword}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="w-full bg-secondary border border-transparent rounded-[1.5rem] px-5 py-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary/30 outline-none transition-all placeholder:text-muted" 
@@ -119,23 +148,55 @@ export default function LoginPage() {
               />
             </div>
             
-            <div className="relative">
-              <input 
-                required
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-secondary border border-transparent rounded-[1.5rem] px-5 py-4 pr-12 text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary/30 outline-none transition-all placeholder:text-muted" 
-                placeholder="Password" 
-              />
-              <button 
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-muted hover:text-foreground transition-colors"
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
+            {!isForgotPassword && (
+              <div className="relative">
+                <input 
+                  required={!isForgotPassword}
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-secondary border border-transparent rounded-[1.5rem] px-5 py-4 pr-12 text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary/30 outline-none transition-all placeholder:text-muted" 
+                  placeholder="Password" 
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-muted hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            )}
+
+            {!isSignUp && !isForgotPassword && (
+              <div className="flex justify-end px-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsForgotPassword(true);
+                    setError(null);
+                  }}
+                  className="text-xs font-semibold text-primary hover:text-primary/80 hover:underline transition-all"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
+
+            {isForgotPassword && (
+              <div className="flex justify-center px-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsForgotPassword(false);
+                    setError(null);
+                  }}
+                  className="text-xs font-semibold text-muted hover:text-foreground hover:underline transition-all"
+                >
+                  Back to Sign In
+                </button>
+              </div>
+            )}
 
             <AnimatePresence>
               {error && (
@@ -152,7 +213,10 @@ export default function LoginPage() {
               {isSubmitting ? (
                  <div className="w-5 h-5 border-2 border-background/30 border-t-background rounded-full animate-spin" />
               ) : (
-                 <>{isSignUp ? 'Join inLucid' : 'Continue'} <ArrowRight size={18} /></>
+                 <>
+                   {isForgotPassword ? 'Send Reset Link' : isSignUp ? 'Join inLucid' : 'Continue'}{' '}
+                   <ArrowRight size={18} />
+                 </>
               )}
             </button>
           </form>
